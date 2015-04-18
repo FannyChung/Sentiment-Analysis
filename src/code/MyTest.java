@@ -1,14 +1,19 @@
 package code;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map.Entry;
+import java.util.Vector;
 
 import jxl.Sheet;
 import jxl.Workbook;
@@ -18,7 +23,6 @@ import jxl.write.WritableSheet;
 import jxl.write.WritableWorkbook;
 import jxl.write.WriteException;
 import jxl.write.biff.RowsExceededException;
-import jxl.write.biff.WritableWorkbookImpl;
 import code.NlpirTest.CLibrary;
 
 public class MyTest {
@@ -29,7 +33,9 @@ public class MyTest {
 
 	ArrayList<AnalReview> reviews = new ArrayList<AnalReview>();
 
+	Vector<String> emotionWords=new Vector<String>();
 	String nativeBytes;
+	final int GUESS_LEN = 50;
 
 	/**
 	 * 处理一个表单里的评论
@@ -80,6 +86,54 @@ public class MyTest {
 	}
 
 	/**
+	 * 对文本进行筛选，去除不含情感的句子
+	 * 
+	 * @param 筛选前的文本
+	 * @return 筛选后的文本
+	 */
+	public String filtText(String text) {
+		String aftText = "";
+		String sens[] = aftText.split("[\n。.?!]");// 分割句子，用换行符或。（中英文）
+		for (String sentence : sens) {
+			for (String emoWord : emotionWords) {
+				if (sentence.contains(emoWord)){//检查是否含有情感词，如果有，则将该句子加入最后的文本
+					aftText += sentence;
+					break;
+				}
+			}
+		}
+		return aftText;
+	}
+
+	/**
+	 * 从指定路径获取所有的情感词、评价词、程度词、主张词等
+	 * 
+	 * @param path文本路径
+	 * @return 词的集合
+	 */
+	public void readHowNet(String path) {
+		File file = new File(path);
+		try {
+			BufferedReader bw = new BufferedReader(new InputStreamReader(
+					new FileInputStream(path), "utf-8"));
+			String line = null;
+			// 因为不知道有几行数据，所以先存入list集合中
+			while ((line = bw.readLine()) != null ) {
+				line=line.trim();
+				if (line.isEmpty()) {
+					continue;
+				}
+				if (!line.startsWith("#")) {
+					emotionWords.addElement(line);
+				}
+			}
+			bw.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
 	 * 分析一条评论 包括字数、词数和词的出现次数
 	 * 
 	 * @param text
@@ -89,16 +143,18 @@ public class MyTest {
 		AnalReview review = new AnalReview(text, level);
 		// 统计字数
 		int charsCount = 0;
+		// 如果大概的词数>估计的平均长度,则进行文本筛选
+		if (text.length() > GUESS_LEN)
+			text = filtText(text);
+
 		// 分词，并统计词数和词出现的词数
 		String[] analText = analText(text);
 		int wordsCount = 0;
 		for (String string : analText) {
 			review.getFrequency().merge(string, 1,
 					(value, newValue) -> add(value, 1));
-			for (int i = 0; i < string.length(); i++) {
-				charsCount++;
-			}
-			wordsCount++;
+			charsCount += string.length();// 统计字数
+			wordsCount++;// 统计词数
 		}
 		review.setWordsCount(wordsCount);
 		review.setCharsCount(charsCount);
@@ -135,7 +191,7 @@ public class MyTest {
 	}
 
 	/**
-	 * 打印所有分析过的评论信息
+	 * 在控制台打印所有分析过的评论信息输出
 	 */
 	public void printRes() {
 		int i = 0;
@@ -150,7 +206,7 @@ public class MyTest {
 	}
 
 	/**
-	 * 初始化文本分析程序
+	 * 初始化分词工具
 	 */
 	public void initNlpri() {
 		// TODO Auto-generated method stub
@@ -169,7 +225,7 @@ public class MyTest {
 	}
 
 	/**
-	 * 对评论文本分词
+	 * 对一条评论文本分词
 	 */
 	public String[] analText(String sInput) {
 		try {
@@ -178,26 +234,55 @@ public class MyTest {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		sInput = sInput
-				.replaceAll(
-//						"[`~@#$%^&*()+=|{}':;',//[//].<>/~@#￥%……&*（）——+|{}【】‘；：”“’。，、\"%&'()*+,-—--丶]",
-//						"[`~@#$%^&*()+=|{}':;',//[//].<>/~！@#￥%……&*（）——+|{}【】‘；：”“’。，、∩》「」《﹏①②③④⑤⊙≧≦←↓_]+",
-						"[^0-9a-zA-Z\u4e00-\u9fa5?!]+",//只保留中英文和?!
-						" ");// 去除特殊字符，保留感叹号和问号
-		sInput=sInput.replaceAll("\\s+", " ");
+		sInput = sInput.replaceAll(
+		// "[`~@#$%^&*()+=|{}':;',//[//].<>/~@#￥%……&*（）——+|{}【】‘；：”“’。，、\"%&'()*+,-—--丶]",
+		// "[`~@#$%^&*()+=|{}':;',//[//].<>/~！@#￥%……&*（）——+|{}【】‘；：”“’。，、∩》「」《﹏①②③④⑤⊙≧≦←↓_]+",
+				"[^0-9a-zA-Z\u4e00-\u9fa5?!]+",// 只保留中英文数字和?!
+				" ");// 去除特殊字符，保留感叹号和问号
+		sInput = sInput.replaceAll("\\s+", " ");
 		nativeBytes = CLibrary.Instance.NLPIR_ParagraphProcess(sInput, 0);
 		nativeBytes = nativeBytes.replaceAll("\\s+", " ");
 		String[] A = nativeBytes.split(" ");
 		return A;
 	}
 
+	/**
+	 * 关闭Nlpir分词工具
+	 */
 	public void exitNlpir() {
 		CLibrary.Instance.NLPIR_Exit();
+	}
+
+	/**
+	 * 在表格中打印每条评论的统计信息
+	 * 
+	 * @param sheet
+	 * @throws WriteException
+	 * @throws RowsExceededException
+	 */
+	public void printReviews(WritableSheet sheet) throws RowsExceededException,
+			WriteException {
+		Label label;
+		int i = 0;
+		for (AnalReview review : reviews) {
+			label = new Label(0, i, review.getText());
+			sheet.addCell(label);
+			label = new Label(1, i, review.getLevel() + "");
+			sheet.addCell(label);
+			label = new Label(2, i, review.getCharsCount() + "");
+			sheet.addCell(label);
+			label = new Label(3, i, review.getWordsCount() + "");
+			sheet.addCell(label);
+			label = new Label(4, i, review.getFrequency().toString());
+			sheet.addCell(label);
+			i++;
+		}
 	}
 
 	public static void main(String[] args) {
 		MyTest test = new MyTest();
 		test.initNlpri();
+		test.readHowNet("C:\\Users\\hp\\Desktop\\HowNet.txt");
 		try {
 			InputStream stream = new FileInputStream(
 					"C:\\Users\\hp\\Desktop\\MyData.xls");
@@ -229,7 +314,10 @@ public class MyTest {
 				sheet.addCell(label);
 				k++;
 			}
-			System.out.println("总词数："+k);
+			// 写每条评论的词频和星级等信息
+			sheet = book.createSheet("所有评论", 5);
+			test.printReviews(sheet);
+			System.out.println("总词数：" + k);
 			book.write();
 			book.close();
 		} catch (BiffException e) {
