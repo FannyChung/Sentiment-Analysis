@@ -7,6 +7,9 @@ public class AnalReview {
 	 * 评论文本
 	 */
 	private String text;
+	
+	private String filtedText;
+	
 	/**
 	 * 评论星级
 	 */
@@ -23,6 +26,7 @@ public class AnalReview {
 	 * 每个词与它的出现次数
 	 */
 	private HashMap<String, Integer> frequency=new HashMap<String, Integer>();
+	
 	
 	public AnalReview(String text, int level) {
 		this.text = text;
@@ -64,5 +68,16 @@ public class AnalReview {
 				+ ", wordsCount=" + wordsCount + ", charsCount=" + charsCount
 				+ ", frequency=" + frequency + "]";
 	}
-	
+	/**
+	 * @return the filtedText
+	 */
+	public String getFiltedText() {
+		return filtedText;
+	}
+	/**
+	 * @param filtedText the filtedText to set
+	 */
+	public void setFiltedText(String filtedText) {
+		this.filtedText = filtedText;
+	}
 }

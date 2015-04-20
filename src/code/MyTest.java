@@ -33,7 +33,6 @@ public class MyTest {
 
 	ArrayList<AnalReview> reviews = new ArrayList<AnalReview>();
 
-	Vector<String> emotionWords=new Vector<String>();
 	String nativeBytes;
 	final int GUESS_LEN = 50;
 
@@ -44,7 +43,8 @@ public class MyTest {
 		for (int i = 0; i < sheet.getRows(); i++) {
 			String text = sheet.getCell(0, i).getContents();
 			int level = Integer.parseInt(sheet.getCell(1, i).getContents());
-			analysis(text, level);
+			String title = sheet.getCell(2, i).getContents();
+			analysis(text, level, title);
 		}
 	}
 
@@ -86,66 +86,29 @@ public class MyTest {
 	}
 
 	/**
-	 * 对文本进行筛选，去除不含情感的句子
-	 * 
-	 * @param 筛选前的文本
-	 * @return 筛选后的文本
-	 */
-	public String filtText(String text) {
-		String aftText = "";
-		String sens[] = aftText.split("[\n。.?!]");// 分割句子，用换行符或。（中英文）
-		for (String sentence : sens) {
-			for (String emoWord : emotionWords) {
-				if (sentence.contains(emoWord)){//检查是否含有情感词，如果有，则将该句子加入最后的文本
-					aftText += sentence;
-					break;
-				}
-			}
-		}
-		return aftText;
-	}
-
-	/**
-	 * 从指定路径获取所有的情感词、评价词、程度词、主张词等
-	 * 
-	 * @param path文本路径
-	 * @return 词的集合
-	 */
-	public void readHowNet(String path) {
-		File file = new File(path);
-		try {
-			BufferedReader bw = new BufferedReader(new InputStreamReader(
-					new FileInputStream(path), "utf-8"));
-			String line = null;
-			// 因为不知道有几行数据，所以先存入list集合中
-			while ((line = bw.readLine()) != null ) {
-				line=line.trim();
-				if (line.isEmpty()) {
-					continue;
-				}
-				if (!line.startsWith("#")) {
-					emotionWords.addElement(line);
-				}
-			}
-			bw.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
-	/**
 	 * 分析一条评论 包括字数、词数和词的出现次数
 	 * 
 	 * @param text
 	 * @param level
+	 * @param title
 	 */
-	public void analysis(String text, int level) {
+	public void analysis(String text, int level, String title) {
+		text += ("\t" + title);
 		AnalReview review = new AnalReview(text, level);
+		try {
+			text = full2HalfChange(text);
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
+		text = text.replaceAll("[^0-9a-zA-Z\u4e00-\u9fa5?!？！]+",// 只保留中英文数字和?!
+				" ");// 去除特殊字符，保留感叹号和问号
+		text = text.replaceAll("\\s+", " ");
+
 		// 统计字数
 		int charsCount = 0;
-		// 如果大概的词数>估计的平均长度,则进行文本筛选
-		if (text.length() > GUESS_LEN)
-			text = filtText(text);
+		// TODO 先进行文本筛选，过滤掉
+		// if(text.length()>GUESS_LEN)
+		// text=filtText(text,review);
 
 		// 分词，并统计词数和词出现的词数
 		String[] analText = analText(text);
@@ -225,25 +188,62 @@ public class MyTest {
 	}
 
 	/**
-	 * 对一条评论文本分词
+	 * 对一段文本分词 过滤其他字符，只保留中英文和数字，？！ 再进行分词
+	 * 
+	 * @param sInput
+	 * @return
 	 */
 	public String[] analText(String sInput) {
-		try {
-			sInput = full2HalfChange(sInput);
-		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		sInput = sInput.replaceAll(
-		// "[`~@#$%^&*()+=|{}':;',//[//].<>/~@#￥%……&*（）——+|{}【】‘；：”“’。，、\"%&'()*+,-—--丶]",
-		// "[`~@#$%^&*()+=|{}':;',//[//].<>/~！@#￥%……&*（）——+|{}【】‘；：”“’。，、∩》「」《﹏①②③④⑤⊙≧≦←↓_]+",
-				"[^0-9a-zA-Z\u4e00-\u9fa5?!]+",// 只保留中英文数字和?!
-				" ");// 去除特殊字符，保留感叹号和问号
-		sInput = sInput.replaceAll("\\s+", " ");
 		nativeBytes = CLibrary.Instance.NLPIR_ParagraphProcess(sInput, 0);
 		nativeBytes = nativeBytes.replaceAll("\\s+", " ");
 		String[] A = nativeBytes.split(" ");
 		return A;
+	}
+
+
+
+	/**
+	 * 对文本进行筛选，去除不含情感的句子
+	 * 
+	 * @param 筛选前的文本
+	 * @return 筛选后的文本
+	 */
+	public String filtText(String text, AnalReview review) {
+		String aftText = "";
+		String filtedText = "";
+		String sens[] = text.split("[。？，！]");// 分割句子，用换行符或。（中英文）
+		// System.out.println(sens.length);
+		for (String sentence : sens) {
+			if (sentence.endsWith("[?!？！]")) {
+				aftText += (sentence + ".");
+				continue;
+			}
+			if (!(sentence.trim().length() > 1))
+				continue;
+			boolean emoSen = false;
+			// System.out.println("sent: " + sentence);
+			String[] words = analText(sentence);// 分词
+			for (String emoWord : GetWords.emotionWords) {
+				for (String word : words) {
+					if (word.equalsIgnoreCase(emoWord)) {// 检查是否含有情感词，如果有，则将该句子加入最后的文本
+						aftText += (sentence + ".");
+						System.out.println(sentence + "\temo\t" + emoWord
+								+ "\t" + word);
+						emoSen = true;
+						break;
+					}
+				}
+				if (emoSen)
+					break;
+			}
+			if (!emoSen)
+				filtedText += (sentence + "\t");
+		}
+		if (filtedText.length() > 1) {
+			System.out.println("fl:\t" + filtedText + "\tfi");
+			review.setFiltedText(filtedText);
+		}
+		return aftText;
 	}
 
 	/**
@@ -275,6 +275,8 @@ public class MyTest {
 			sheet.addCell(label);
 			label = new Label(4, i, review.getFrequency().toString());
 			sheet.addCell(label);
+			label = new Label(5, i, review.getFiltedText());
+			sheet.addCell(label);
 			i++;
 		}
 	}
@@ -282,7 +284,6 @@ public class MyTest {
 	public static void main(String[] args) {
 		MyTest test = new MyTest();
 		test.initNlpri();
-		test.readHowNet("C:\\Users\\hp\\Desktop\\HowNet.txt");
 		try {
 			InputStream stream = new FileInputStream(
 					"C:\\Users\\hp\\Desktop\\MyData.xls");
@@ -296,8 +297,9 @@ public class MyTest {
 				sheet = book.getSheet(i);
 				test.dealSheetRev(sheet);
 			}
-			test.printRes();
+			// test.printRes();
 			test.analAll();
+
 			// 将词频信息写入表单中
 			Label label;
 			sheet = book.createSheet("总词频", 4);
