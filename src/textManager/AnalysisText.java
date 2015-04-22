@@ -39,12 +39,12 @@ public class AnalysisText {
 	/**
 	 * 每个词与它的出现次数
 	 */
-	HashMap<String, Integer> frequency = new HashMap<String, Integer>();
+	private HashMap<String, Integer> frequency = new HashMap<String, Integer>();
 
-	ArrayList<AnalReview> reviews = new ArrayList<AnalReview>();
+	private ArrayList<AnalReview> reviews = new ArrayList<AnalReview>();
 
-	String nativeBytes;
-	final int GUESS_LEN = 50;
+	private String nativeBytes;
+	private final int GUESS_LEN = 50;
 
 	/**
 	 * 处理一个表单里的评论
@@ -99,8 +99,8 @@ public class AnalysisText {
 	}
 
 	/**
-	 * 对一条评论字符进行处理
-	 * 
+	 * 对一条评论字符进行分词处理
+	 * 统计评论的字数、词数
 	 * @param text
 	 *            评论文本
 	 * @param level
@@ -109,26 +109,11 @@ public class AnalysisText {
 	 *            评论标题
 	 */
 	public void analysis(String text, int level, String title) {
-		text += ("\t" + title);
+		text += (" " + title);
 		AnalReview review = new AnalReview(text, level);
-		try {
-			text = full2HalfChange(text);
-		} catch (UnsupportedEncodingException e) {
-			e.printStackTrace();
-		}
-		text = text.replaceAll("[^0-9a-zA-Z\u4e00-\u9fa5?!？！]+",// 只保留中英文数字和?!
-				" ");// 去除特殊字符，保留感叹号和问号
-		text = text.replaceAll("\\s+", " ");
-		reviews.add(review);
-	}
-
-	/**统计每个评论的字数、词数
-	 * @param review
-	 */
-	public void countWordsChars(AnalReview review) {
 		// 统计字数
 		int charsCount = 0;
-		// TODO 先进行文本筛选，过滤掉
+		// TODO 先进行文本筛选，过滤客观句子
 		// if(text.length()>GUESS_LEN)
 		// text=filtText(text,review);
 
@@ -143,7 +128,9 @@ public class AnalysisText {
 		}
 		review.setWordsCount(wordsCount);
 		review.setCharsCount(charsCount);
+		reviews.add(review);
 	}
+
 
 	/**对指定的评论集合进行分析
 	 * 统计总的字数、词数、词频
@@ -217,6 +204,14 @@ public class AnalysisText {
 	 * @return 分词后的单词的数组
 	 */
 	public String[] analText(String sInput) {
+		try {
+			sInput = full2HalfChange(sInput);
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
+		sInput = sInput.replaceAll("[^0-9a-zA-Z\u4e00-\u9fa5?!？！]+",// 只保留中英文数字和?!
+				" ");// 去除特殊字符，保留感叹号和问号
+		sInput = sInput.replaceAll("\\s+", " ");
 		nativeBytes = CLibrary.Instance.NLPIR_ParagraphProcess(sInput, 0);
 		nativeBytes = nativeBytes.replaceAll("\\s+", " ");
 		String[] A = nativeBytes.split(" ");
@@ -240,7 +235,7 @@ public class AnalysisText {
 	 * @throws RowsExceededException
 	 *             行错误
 	 */
-	public void writeReviews(WritableSheet sheet) throws RowsExceededException,
+	public void writeReviews(WritableSheet sheet,ArrayList<AnalReview> reviews) throws RowsExceededException,
 			WriteException {
 		Label label;
 		int i = 0;
@@ -289,44 +284,12 @@ public class AnalysisText {
 		System.out.println("总词数：" + k);
 	}
 
-	public static void main(String[] args) {
-		AnalysisText test = new AnalysisText();
-		test.initNlpri();
-		try {
-			InputStream stream = new FileInputStream(
-					"C:\\Users\\hp\\Desktop\\MyData.xls");
-			Workbook wb = Workbook.getWorkbook(stream);
-
-			WritableWorkbook book = Workbook.createWorkbook(new File(
-					"result.xls"), wb);
-			WritableSheet sheet;
-			// 读表格中的信息
-			for (int i = 0; i < 4; i++) {
-				sheet = book.getSheet(i);
-				test.dealSheetRev(sheet);
-			}
-			// test.printRes();
-			test.analAll(test.frequency);
-
-			// 将词频信息写入表单中
-			sheet = book.createSheet("总词频", 4);
-			test.writeFrequecy(sheet);
-
-			// 写每条评论的词频和星级等信息
-			sheet = book.createSheet("所有评论", 5);
-			test.writeReviews(sheet);
-
-			book.write();
-			book.close();
-		} catch (BiffException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (RowsExceededException e) {
-			e.printStackTrace();
-		} catch (WriteException e) {
-			e.printStackTrace();
-		}
-		test.exitNlpir();
+	public HashMap<String, Integer> getFrequency() {
+		return frequency;
 	}
+	
+	public ArrayList<AnalReview> getReviews() {
+		return reviews;
+	}
+
 }
