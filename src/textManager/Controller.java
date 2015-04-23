@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 
 import jxl.Workbook;
 import jxl.read.biff.BiffException;
@@ -18,11 +19,23 @@ public class Controller {
 	private FeatureSelection featureSelection = new FeatureSelection();
 	private WritableWorkbook book;
 
-	public void openExcel() throws BiffException, IOException {
-		InputStream stream = new FileInputStream(
-				"C:\\Users\\hp\\Desktop\\MyData.xls");
-		Workbook wb = Workbook.getWorkbook(stream);
-		book = Workbook.createWorkbook(new File("result.xls"), wb);
+	public void openExcel() {
+		InputStream stream;
+		try {
+			stream = new FileInputStream("C:\\Users\\hp\\Desktop\\MyData.xls");
+			Workbook wb = Workbook.getWorkbook(stream);
+			book = Workbook.createWorkbook(new File("result.xls"), wb);
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (BiffException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
 	}
 
 	public void closeExcel() {
@@ -30,10 +43,8 @@ public class Controller {
 			book.write();
 			book.close();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (WriteException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -69,45 +80,57 @@ public class Controller {
 		textAnal.exitNlpir();
 	}
 
-	public void featureSel() throws BiffException, IOException,
-			RowsExceededException, WriteException {
+	public void featureSel() {
 		featureSelection.sortByFreq(textAnal.getFrequency());
 		featureSelection.delLessThan(2);
 		featureSelection.delTopK(10);
 		WritableSheet sheet = book.createSheet("筛选后的特征", 6);
-		featureSelection.writeFeature(sheet);
-	}
-
-	public void seleTrainSet() throws RowsExceededException, WriteException {
-		TrainSet trainSet = new TrainSet();
-		int a[] = { 1, 3, 5 };
-		trainSet.calCategory(a, textAnal.getReviews());
-		trainSet.seleTrain(a, 200, textAnal.getReviews());
-		WritableSheet sheet = book.createSheet("选择的训练集", 7);
-		textAnal.writeReviews(sheet, trainSet.getTrainRev());
-	}
-
-	public static void main(String[] args) {
-		Controller controller = new Controller();
-
 		try {
-			controller.openExcel();
-			controller.wordSegmentation();
-
-			controller.featureSel();
-
-			controller.seleTrainSet();
-			
-			controller.closeExcel();
-		} catch (BiffException | IOException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		} catch (RowsExceededException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			featureSelection.writeFeature(sheet);
 		} catch (WriteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+
+	public void seleTrainSet() {
+		TrainSet trainSet = new TrainSet();
+		int a[] = { 1,2, 3,4, 5 };
+		// trainSet.calCategory(a,
+		// textAnal.getReviews());//无需统计每个类别的个数，因为已经指定是200
+		trainSet.seleTrain(a, 1000, textAnal.getReviews());
+		int i = 0;
+		for (; i < a.length; i++) {
+			WritableSheet sheet = book.createSheet("选择的训练集" + (i + 1), 7 + i);
+			try {
+				textAnal.writeReviews(sheet, trainSet.getDiffCateTrainSet()
+						.get(i));
+			} catch (WriteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		ArrayList<String> features = featureSelection.getFeatureString();
+		trainSet.calcAll(features);
+		WritableSheet sheet = book.createSheet("词在不同类别中出现的次数", 7 + i);
+		i++;
+		try {
+			trainSet.writeCount(sheet, features);
+			trainSet.makefeatureCode(features);
+			sheet=book.createSheet("预测结果", 7+i);
+			trainSet.writePredResult(trainSet.getTestSet(), sheet, features,a);
+		} catch (WriteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	public static void main(String[] args) {
+		Controller controller = new Controller();
+		controller.openExcel();
+		controller.wordSegmentation();
+		controller.featureSel();
+		controller.seleTrainSet();
+		controller.closeExcel();
 	}
 }

@@ -40,11 +40,11 @@ public class FeatureSelection {
 					public int compare(
 							Map.Entry<String, Integer> firstMapEntry,
 							Map.Entry<String, Integer> secondMapEntry) {
-						return firstMapEntry.getValue()-
-								secondMapEntry.getValue();
+						return firstMapEntry.getValue()
+								- secondMapEntry.getValue();
 					}
 				});
-		System.out.println("after sort\n"+features.toString());
+		System.out.println("after sort\n" + features.toString());
 	}
 
 	/**
@@ -54,8 +54,8 @@ public class FeatureSelection {
 	 */
 	public void delTopK(int k) {
 		Logger logger = Logger.getLogger("删除高频词");
-		for (int i =0; i < k; i++) {
-			int last=features.size()-1;
+		for (int i = 0; i < k; i++) {
+			int last = features.size() - 1;
 			logger.info(features.get(last).toString());
 			features.remove(last);
 		}
@@ -93,7 +93,16 @@ public class FeatureSelection {
 		System.out.println(features);
 		System.out.println("总词数：" + k);
 	}
+
 	public List<Map.Entry<String, Integer>> getFeatures() {
 		return features;
+	}
+
+	public ArrayList<String> getFeatureString() {
+		ArrayList<String> arrayList = new ArrayList<String>(features.size());
+		for (int i = 0; i < features.size(); i++) {
+			arrayList.add(features.get(i).getKey());
+		}
+		return arrayList;
 	}
 }

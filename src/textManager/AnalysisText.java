@@ -13,7 +13,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.Vector;
 
 import textManager.NlpirTest.CLibrary;
 import jxl.Sheet;
@@ -99,8 +98,8 @@ public class AnalysisText {
 	}
 
 	/**
-	 * 对一条评论字符进行分词处理
-	 * 统计评论的字数、词数
+	 * 对一条评论字符进行分词处理 统计评论的字数、词数
+	 * 
 	 * @param text
 	 *            评论文本
 	 * @param level
@@ -131,9 +130,9 @@ public class AnalysisText {
 		reviews.add(review);
 	}
 
-
-	/**对指定的评论集合进行分析
-	 * 统计总的字数、词数、词频
+	/**
+	 * 对指定的评论集合进行分析 统计总的字数、词数、词频
+	 * 
 	 * @param frequency
 	 */
 	public void analAll(HashMap<String, Integer> frequency) {
@@ -157,8 +156,8 @@ public class AnalysisText {
 		}
 		System.out.println("wordsSum" + wordSum);
 		System.out.println("charSum" + charSum);
-		System.out.println("aveWords" + (double)wordSum / i);
-		System.out.println("aveChars" + (double)charSum / i);
+		System.out.println("aveWords" + (double) wordSum / i);
+		System.out.println("aveChars" + (double) charSum / i);
 		System.out.println(frequency);
 	}
 
@@ -235,8 +234,8 @@ public class AnalysisText {
 	 * @throws RowsExceededException
 	 *             行错误
 	 */
-	public void writeReviews(WritableSheet sheet,ArrayList<AnalReview> reviews) throws RowsExceededException,
-			WriteException {
+	public void writeReviews(WritableSheet sheet, ArrayList<AnalReview> reviews)
+			throws RowsExceededException, WriteException {
 		Label label;
 		int i = 0;
 		for (AnalReview review : reviews) {
@@ -287,7 +286,7 @@ public class AnalysisText {
 	public HashMap<String, Integer> getFrequency() {
 		return frequency;
 	}
-	
+
 	public ArrayList<AnalReview> getReviews() {
 		return reviews;
 	}

@@ -8,7 +8,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Vector;
+import java.util.ArrayList;
 
 /**
  * 从文件中读取情感词表和停用词表
@@ -17,8 +17,8 @@ import java.util.Vector;
  *
  */
 public class ReadWords {
-	public static Vector<String> emotionWords = new Vector<String>();
-	public static Vector<String> stopWordsList=new Vector<String>();
+	public static ArrayList<String> emotionWords = new ArrayList<String>();
+	public static ArrayList<String> stopWordsList=new ArrayList<String>();
 
 	static {
 		readHowNet("C:\\Users\\hp\\Desktop\\HowNet.txt");
@@ -41,7 +41,7 @@ public class ReadWords {
 					continue;
 				}
 				if (!line.contains("#")) {
-					ReadWords.emotionWords.addElement(line);
+					ReadWords.emotionWords.add(line);
 				}
 			}
 			bw.close();
@@ -68,7 +68,7 @@ public class ReadWords {
 				if (line.isEmpty()) {
 					continue;
 				}
-				ReadWords.stopWordsList.addElement(line);
+				ReadWords.stopWordsList.add(line);
 			}
 			bw.close();
 		} catch (IOException e) {

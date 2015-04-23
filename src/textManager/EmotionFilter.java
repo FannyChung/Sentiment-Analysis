@@ -5,14 +5,14 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Vector;
+import java.util.ArrayList;
 
 /**过滤客观文本，留下主观文本
  * @author hp
  *
  */
 public class EmotionFilter {
-	Vector<String> emotionWords = new Vector<String>();
+	ArrayList<String> emotionWords = new ArrayList<String>();
 	static AnalysisText test = new AnalysisText();
 
 	/**
@@ -34,7 +34,7 @@ public class EmotionFilter {
 					continue;
 				}
 				if (!line.contains("#")) {
-					emotionWords.addElement(line);
+					emotionWords.add(line);
 				}
 			}
 			bw.close();

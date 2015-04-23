@@ -7,16 +7,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**处理停用词
+/**
+ * 处理停用词
+ * 
  * @author hp
  *
  */
 public class StopWordsHandler
 
 {
-	static List<Map.Entry<String, Integer>> lists;
+	private List<Map.Entry<String, Integer>> lists;
 
-	private static void initLists(HashMap<String, Integer> frequency) {
+	private void initLists(HashMap<String, Integer> frequency) {
 		lists = new ArrayList<Map.Entry<String, Integer>>(frequency.entrySet());
 		Collections.sort(lists, new Comparator<Map.Entry<String, Integer>>() {
 			public int compare(Map.Entry<String, Integer> o1,
@@ -53,5 +55,12 @@ public class StopWordsHandler
 				return false;
 		}
 		return true;
+	}
+
+	/**
+	 * @return the lists
+	 */
+	public List<Map.Entry<String, Integer>> getLists() {
+		return lists;
 	}
 }
