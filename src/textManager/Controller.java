@@ -6,6 +6,9 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Random;
+import java.util.Set;
 
 import jxl.Workbook;
 import jxl.read.biff.BiffException;
@@ -91,6 +94,18 @@ public class Controller {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+	//生成不重复的随机数，用来选择训练集
+	private Set<Integer> geneRadomSeq(int totalSize){
+		Set<Integer> list=new HashSet<Integer>(totalSize);
+		Random rand = new Random();
+		int k=0;
+		while (k<totalSize) {
+			int i=rand.nextInt(totalSize);
+			if(list.add(i))
+				k++;
+		}
+		return list;
 	}
 
 	public void seleTrainSet() {
