@@ -15,7 +15,8 @@ import jxl.write.biff.RowsExceededException;
  *
  */
 public class Predict {
-	private ArrayList<ArrayList<Double>> pOfWordInDifCate;// P(w|c)
+	private ArrayList<ArrayList<Double>> pOfWordInDifCate;// P(f|c)
+	private ArrayList<Double> pOfACate;//P(c)
 
 	private ArrayList<ArrayList<Integer>> countOfWordsDifCate;
 	private HashMap<String, Integer> featureCode;
@@ -25,6 +26,7 @@ public class Predict {
 		countOfWordsDifCate = trainSet.getCountOfWordsDifCate();
 		featureCode = trainSet.getFeatureCode();
 		pOfWordInDifCate = calculateP.getpOfWordInDifCate();
+		pOfACate=calculateP.getpOfACate();
 	}
 
 	/**
@@ -42,7 +44,7 @@ public class Predict {
 		double finalP = -Double.MAX_VALUE;
 		logger.info(review.getText().substring(0, 1)+"\t");
 		for (int i = 0; i < n; i++) {
-			double p = 1;
+			double p = Math.log(pOfACate.get(i));
 			HashMap<String, Integer> reviewWords = review.getFrequency();
 			for (String string : features) {
 				int index=featureCode.get(string);
