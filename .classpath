@@ -4,5 +4,6 @@
 	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
 	<classpathentry kind="lib" path="lib/jna-4.0.0.jar"/>
 	<classpathentry kind="lib" path="C:/Users/hp/Desktop/ICTCLAS2015/sample/JnaTest_NLPIR/jxl.jar"/>
+	<classpathentry kind="lib" path="C:/Users/hp/Downloads/WebNew/log4j-1.2.17.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

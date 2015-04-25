@@ -208,7 +208,7 @@ public class AnalysisText {
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
 		}
-		sInput = sInput.replaceAll("[^0-9a-zA-Z\u4e00-\u9fa5?!？！]+",// 只保留中英文数字和?!
+		sInput = sInput.replaceAll("[^\u4e00-\u9fa5?!？！]+",// 只保留中英文数字和?! 0-9a-zA-Z
 				" ");// 去除特殊字符，保留感叹号和问号
 		sInput = sInput.replaceAll("\\s+", " ");
 		nativeBytes = CLibrary.Instance.NLPIR_ParagraphProcess(sInput, 0);
