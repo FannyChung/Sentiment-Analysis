@@ -50,10 +50,8 @@ public class Predict {
 				int index=featureCode.get(string);
 				if (reviewWords.containsKey(string)) {
 					p+=Math.log(pOfWordInDifCate.get(i).get(index));
-//					p*=pOfWordInDifCate.get(i).get(index);
 				} else {
 					p+=Math.log(1-pOfWordInDifCate.get(i).get(index));
-//					p*=(1-pOfWordInDifCate.get(i).get(index));
 				}
 			}
 			if (finalP < p) {

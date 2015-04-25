@@ -25,17 +25,17 @@ public class TrainSet {
 	private ArrayList<AnalReview> testSet = new ArrayList<AnalReview>();// 测试集
 	private ArrayList<ArrayList<AnalReview>> diffCateTrainSet;// 不同类别的训练集
 	private ArrayList<AnalReview> allTrainSet;
-	private ArrayList<Integer> diffCateNum;//不同类别的文本个数
+	private ArrayList<Integer> diffCateNum;// 不同类别的文本个数
 
 	private ArrayList<ArrayList<Integer>> countOfWordsDifCate;// 词在不同类别中的计数
 	private HashMap<String, Integer> featureCode;// 对特征进行编码
 
 	public void seleTrain(int a[], double percent, ArrayList<AnalReview> reviews) {
 		int totalSize = reviews.size();
-		int cateNum=a.length;
+		int cateNum = a.length;
 		int trainSize = (int) (totalSize * percent);
 		Set<AnalReview> trainSetTmp = new HashSet<AnalReview>();
-		diffCateTrainSet=new ArrayList<ArrayList<AnalReview>>(cateNum);
+		diffCateTrainSet = new ArrayList<ArrayList<AnalReview>>(cateNum);
 		for (int i = 0; i < a.length; i++) {
 			diffCateTrainSet.add(new ArrayList<AnalReview>());
 		}
@@ -54,15 +54,15 @@ public class TrainSet {
 				}
 			}
 		}
-		allTrainSet=new ArrayList<AnalReview>(trainSize);
+		allTrainSet = new ArrayList<AnalReview>(trainSize);
 		allTrainSet.addAll(trainSetTmp);
-		
+
 		for (AnalReview analReview : reviews) {
-			if(!trainSetTmp.contains(analReview))
+			if (!trainSetTmp.contains(analReview))
 				testSet.add(analReview);
 		}
-		System.out.println("测试集大小："+allTrainSet.size());
-		System.out.println("训练集大小："+testSet.size());
+		System.out.println("测试集大小：" + allTrainSet.size());
+		System.out.println("训练集大小：" + testSet.size());
 	}
 
 	/**
@@ -77,7 +77,7 @@ public class TrainSet {
 		int n = a.length;
 		Map<Integer, Integer> cateLevel2cateNum = new HashMap<Integer, Integer>(
 				n);
-		allTrainSet=new ArrayList<AnalReview>(numOfEach*n);
+		allTrainSet = new ArrayList<AnalReview>(numOfEach * n);
 		diffCateTrainSet = new ArrayList<ArrayList<AnalReview>>(n);
 		for (int i = 0; i < n; i++) {
 			cateLevel2cateNum.put(a[i], i);
@@ -235,7 +235,7 @@ public class TrainSet {
 	 * @return the diffCateNum
 	 */
 	public ArrayList<Integer> getDiffCateNum() {
-		int n=diffCateTrainSet.size();//类别个数
+		int n = diffCateTrainSet.size();// 类别个数
 		diffCateNum = new ArrayList<Integer>(n);
 		for (ArrayList<AnalReview> arrayList : diffCateTrainSet) {
 			diffCateNum.add(arrayList.size());
