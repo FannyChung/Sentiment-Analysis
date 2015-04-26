@@ -16,7 +16,7 @@ import jxl.write.WriteException;
 import jxl.write.biff.RowsExceededException;
 
 /**
- * 分离训练集和测试集，并计数
+ * 分离训练集和测试集
  * 
  * @author hp
  *
@@ -25,11 +25,17 @@ public class TrainSet {
 	private ArrayList<AnalReview> testSet = new ArrayList<AnalReview>();// 测试集
 	private ArrayList<ArrayList<AnalReview>> diffCateTrainSet;// 不同类别的训练集
 	private ArrayList<AnalReview> allTrainSet;
-	private ArrayList<Integer> diffCateNum;// 不同类别的文本个数
 
-	private ArrayList<ArrayList<Integer>> countOfWordsDifCate;// 词在不同类别中的计数
-	private HashMap<String, Integer> featureCode;// 对特征进行编码
-
+	/**
+	 * 按百分比随机选择训练集
+	 * 
+	 * @param a
+	 *            对应分类的数组
+	 * @param percent
+	 *            训练集占所有数据集的百分比
+	 * @param reviews
+	 *            所有的数据集
+	 */
 	public void seleTrain(int a[], double percent, ArrayList<AnalReview> reviews) {
 		int totalSize = reviews.size();
 		int cateNum = a.length;
@@ -40,6 +46,10 @@ public class TrainSet {
 			diffCateTrainSet.add(new ArrayList<AnalReview>());
 		}
 		// TODO 使得trainSize<所有符合类别的评论的个数
+		if(trainSize>reviews.size()){
+			System.err.println("请使得训练集更小！");
+			System.exit(0);
+		}
 
 		Random rand = new Random();
 		for (int i = 0; i < trainSize;) {
@@ -101,101 +111,6 @@ public class TrainSet {
 	}
 
 	/**
-	 * 计算给定类别的评论集合中，包含该特征词的文本数量
-	 * 
-	 * @param feature
-	 *            特征词
-	 * @param reviewsOfACate
-	 *            给定的同一个类别的评论集合
-	 * @return
-	 */
-	public int calcNumOfWordInCate(String feature,
-			ArrayList<AnalReview> reviewsOfACate) {
-		int n = 0;
-		for (AnalReview analReview : reviewsOfACate) {
-			// n += (analReview.getFrequency().getOrDefault(feature, 0));
-			if (analReview.getFrequency().containsKey(feature))
-				n++;
-		}
-		return n;
-	}
-
-	/**
-	 * 统计不同类别中，所有词出现的词数
-	 * 
-	 * @param features
-	 *            所有特征词
-	 */
-	public void countAll(ArrayList<String> features) {
-		int n = diffCateTrainSet.size();
-		countOfWordsDifCate = new ArrayList<ArrayList<Integer>>(n);
-		for (ArrayList<AnalReview> arrayList : diffCateTrainSet) {
-			ArrayList<Integer> wordOfAcate = new ArrayList<Integer>(
-					features.size() + 1);
-			int sum = 0;
-			for (String string : features) {
-				int count = calcNumOfWordInCate(string, arrayList);
-				wordOfAcate.add(count);
-				sum += count;
-			}
-			wordOfAcate.add(sum);
-			countOfWordsDifCate.add(wordOfAcate);
-		}
-	}
-
-	/**
-	 * 将所有的特征词在不同类别出现的次数写到表单中
-	 * 
-	 * @param sheet
-	 *            要写入的表单
-	 * @param features
-	 *            所有特征词
-	 * @throws RowsExceededException
-	 * @throws WriteException
-	 */
-	public void writeCount(WritableSheet sheet, ArrayList<String> features)
-			throws RowsExceededException, WriteException {
-		int i = 0;
-		Label label;
-		for (String string : features) {
-			label = new Label(0, i, string);
-			sheet.addCell(label);
-			i++;
-		}
-		i = 1;
-		for (ArrayList<Integer> arrayList : countOfWordsDifCate) {
-			int j = 0;
-			for (Integer integer : arrayList) {
-				label = new Label(i, j, integer.toString());
-				sheet.addCell(label);
-
-				label = new Label(
-						i + 5,
-						j,
-						((double) integer / arrayList.get(arrayList.size() - 1))
-								+ "");
-				sheet.addCell(label);
-				j++;
-			}
-			i++;
-		}
-	}
-
-	/**
-	 * 为所有的特征词编码
-	 * 
-	 * @param features
-	 */
-	public void makefeatureCode(ArrayList<String> features) {
-		featureCode = new HashMap<String, Integer>(features.size());
-		int i = 0;
-		for (String string : features) {
-			featureCode.put(string, i);
-			i++;
-		}
-	}
-
-	/**
 	 * @return the diffCateTrainSet 不同类别的训练集
 	 */
 	public ArrayList<ArrayList<AnalReview>> getDiffCateTrainSet() {
@@ -218,36 +133,9 @@ public class TrainSet {
 	}
 
 	/**
-	 * @return the countOfWordsDifCate
-	 */
-	public ArrayList<ArrayList<Integer>> getCountOfWordsDifCate() {
-		return countOfWordsDifCate;
-	}
-
-	/**
-	 * @return the featureCode
-	 */
-	public HashMap<String, Integer> getFeatureCode() {
-		return featureCode;
-	}
-
-	/**
-	 * @return the diffCateNum
-	 */
-	public ArrayList<Integer> getDiffCateNum() {
-		int n = diffCateTrainSet.size();// 类别个数
-		diffCateNum = new ArrayList<Integer>(n);
-		for (ArrayList<AnalReview> arrayList : diffCateTrainSet) {
-			diffCateNum.add(arrayList.size());
-		}
-		return diffCateNum;
-	}
-
-	/**
 	 * @return the allTrainSet
 	 */
 	public ArrayList<AnalReview> getAllTrainSet() {
 		return allTrainSet;
 	}
-
 }

@@ -35,10 +35,7 @@ import jxl.write.biff.RowsExceededException;
  *
  */
 public class AnalysisText {
-	/**
-	 * 每个词与它的出现次数
-	 */
-	private HashMap<String, Integer> frequency = new HashMap<String, Integer>();
+
 
 	private ArrayList<AnalReview> reviews = new ArrayList<AnalReview>();
 
@@ -93,8 +90,8 @@ public class AnalysisText {
 		return outStrBuf.toString();
 	}
 
-	private Integer add(Integer value, Integer addNum) {
-		return value + addNum;
+	private Integer addOne(Integer value) {
+		return value + 1;
 	}
 
 	/**
@@ -121,7 +118,7 @@ public class AnalysisText {
 		int wordsCount = 0;
 		for (String string : analText) {
 			review.getFrequency().merge(string, 1,
-					(value, newValue) -> add(value, 1));
+					(value, newValue) -> addOne(value));
 			charsCount += string.length();// 统计字数
 			wordsCount++;// 统计词数
 		}
@@ -130,36 +127,7 @@ public class AnalysisText {
 		reviews.add(review);
 	}
 
-	/**
-	 * 对指定的评论集合进行分析 统计总的字数、词数、词频
-	 * 
-	 * @param frequency
-	 */
-	public void analAll(HashMap<String, Integer> frequency) {
-		int i = 0;
-		int wordSum = 0;
-		int charSum = 0;
-		for (AnalReview analReview : reviews) {
-			i++;
-			wordSum += analReview.getWordsCount();// 统计总的词数
-			charSum += analReview.getCharsCount();// 统计总的字数
-
-			HashMap<String, Integer> revFreq = analReview.getFrequency();
-			Iterator iter = revFreq.entrySet().iterator();
-			while (iter.hasNext()) {
-				HashMap.Entry entry = (HashMap.Entry) iter.next();
-				String string = (String) entry.getKey();
-				Integer sfre = (Integer) entry.getValue();
-				frequency.merge(string, sfre,
-						(value, newValue) -> add(value, sfre));
-			}
-		}
-		System.out.println("wordsSum" + wordSum);
-		System.out.println("charSum" + charSum);
-		System.out.println("aveWords" + (double) wordSum / i);
-		System.out.println("aveChars" + (double) charSum / i);
-		System.out.println(frequency);
-	}
+	
 
 	/**
 	 * 在控制台打印所有分析过的评论信息输出
@@ -183,9 +151,6 @@ public class AnalysisText {
 		// TODO Auto-generated method stub
 		String argu = "C:/Users/hp/Desktop/ICTCLAS2015/sample/JnaTest_NLPIR/";
 		// String system_charset = "GBK";//GBK----0
-		String system_charset = "UTF-8";
-		int charset_type = 1;
-
 		int init_flag = CLibrary.Instance.NLPIR_Init(argu, 1, "0");
 
 		if (0 == init_flag) {
@@ -255,40 +220,13 @@ public class AnalysisText {
 		}
 	}
 
-	/**
-	 * 将词频信息(单词+次数)写入表单中
-	 * 
-	 * @param sheet
-	 *            要写的表单
-	 * @throws WriteException
-	 *             写错误
-	 * @throws RowsExceededException
-	 *             行错误
-	 */
-	public void writeFrequecy(WritableSheet sheet)
-			throws RowsExceededException, WriteException {
-		Label label;
-		Iterator<Entry<String, Integer>> iter = frequency.entrySet().iterator();
-		int k = 0;
-		while (iter.hasNext()) {
-			HashMap.Entry entry = iter.next();
-			String string = (String) entry.getKey();
-			Integer sfre = (Integer) entry.getValue();
-			label = new Label(0, k, string);
-			sheet.addCell(label);
-			label = new Label(1, k, sfre.toString());
-			sheet.addCell(label);
-			k++;
-		}
-		System.out.println("总词数：" + k);
-	}
 
-	public HashMap<String, Integer> getFrequency() {
-		return frequency;
-	}
+
 
 	public ArrayList<AnalReview> getReviews() {
 		return reviews;
 	}
+	
+
 
 }

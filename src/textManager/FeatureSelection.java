@@ -19,12 +19,72 @@ import jxl.write.WriteException;
 import jxl.write.biff.RowsExceededException;
 
 /**
+ * 特征选择
+ * 
  * @author hp
  *
  */
 public class FeatureSelection {
+	private ArrayList<Integer> featureCount;// 该特征在所有文档中的出现次数
+	private ArrayList<Integer> diffCateNum;// 不同类别的文本个数
+	private ArrayList<ArrayList<Integer>> countOfWordsDifCate;// 词在不同类别中的计数
+	private int trainSize;
 
 	private List<Map.Entry<String, Integer>> features;
+
+	public FeatureSelection(TrainSet trainSet,CountNum countNum) {
+		featureCount=countNum.getFeatureCount();
+		diffCateNum=countNum.getDiffCateNum();
+		countOfWordsDifCate=countNum.getCountOfWordsDifCate();
+		trainSize=trainSet.getAllTrainSet().size();
+	}
+	
+	public ArrayList<String> IGSelection(ArrayList<String> features,
+			int afterSize) {
+		int beforeSize = features.size();
+		Map<String, Double> featureIG = new HashMap<String, Double>(beforeSize);// 不同特征的IG值
+		for (int i = 0; i < features.size(); i++) {
+			double Hcf = 0;
+			double sum = 0;
+			for (int k = 0; k < 2; k++) {
+				int Nf = featureCount.get(i);
+				if (k == 1)
+					Nf = 1 - Nf;
+				double Pf = (double) Nf / trainSize;
+				for (int j = 0; j < countOfWordsDifCate.size(); j++) {// 不同类别
+					int Nc = diffCateNum.get(j);
+					double Pcf = (double) Nc / Nf;
+					sum += Pcf * (Math.log(Pcf + Double.MIN_VALUE));
+				}
+				Hcf += Pf * sum;
+			}
+			featureIG.put(features.get(i), Hcf);
+		}
+		// 排序，value值大的排在前面
+		List<Map.Entry<String, Double>> sortedIG = new ArrayList<Map.Entry<String, Double>>(
+				featureIG.entrySet());
+		Collections.sort(sortedIG, new Comparator<Map.Entry<String, Double>>() {
+			@Override
+			public int compare(Map.Entry<String, Double> firstMapEntry,
+					Map.Entry<String, Double> secondMapEntry) {
+				double res = secondMapEntry.getValue()
+						- firstMapEntry.getValue();
+				if (res > 0)
+					return 1;
+				else if (res < 0) {
+					return -1;
+				} else {
+					return 0;
+				}
+			}
+		});
+
+		ArrayList<String> afterFeatures = new ArrayList<String>(afterSize);
+		for (int i = 0; i < afterSize; i++) {
+			afterFeatures.add(sortedIG.get(i).getKey());
+		}
+		return afterFeatures;
+	}
 
 	/**
 	 * 按词出现的词数把词进行排序
@@ -104,5 +164,13 @@ public class FeatureSelection {
 			arrayList.add(features.get(i).getKey());
 		}
 		return arrayList;
+	}
+
+	/**
+	 * @param features
+	 *            the features to set
+	 */
+	public void setFeatures(List<Map.Entry<String, Integer>> features) {
+		this.features = features;
 	}
 }

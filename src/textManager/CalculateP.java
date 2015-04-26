@@ -4,7 +4,12 @@
 package textManager;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * 计算各种概率
@@ -13,21 +18,20 @@ import java.util.HashMap;
  *
  */
 public class CalculateP {
-	private ArrayList<ArrayList<Integer>> countOfWordsDifCate;// 特征 类别
-	private HashMap<String, Integer> featureCode;
+	private ArrayList<ArrayList<Integer>> countOfWordsDifCate;// 特征 类别计数
+	private int sampleSize;
+	private ArrayList<Integer> diffCateNum;// 不同类别的文本个数,N_c
+	private ArrayList<Integer> featureCount;// 该特征在所有文档中的出现次数
 
 	private ArrayList<ArrayList<Double>> pOfWordInDifCate;// P(f|c)
 	private ArrayList<Double> pOfACate;// P(c)
-	private int sampleSize;
-	private ArrayList<Integer> diffCateNum;
 
-	public CalculateP(TrainSet trainSet, ArrayList<String> features) {
-		countOfWordsDifCate = trainSet.getCountOfWordsDifCate();
-		featureCode = trainSet.getFeatureCode();
-		sampleSize = trainSet.getTestSet().size();
-		diffCateNum = trainSet.getDiffCateNum();
-		calcPfc(features);
-		calcPc();
+	
+	public CalculateP(TrainSet trainSet,CountNum countNum) {
+		countOfWordsDifCate = countNum.getCountOfWordsDifCate();
+		sampleSize = trainSet.getAllTrainSet().size();
+		diffCateNum = countNum.getDiffCateNum();
+		featureCount = countNum.getFeatureCount();
 	}
 
 	/**
@@ -35,24 +39,25 @@ public class CalculateP {
 	 * 
 	 * @param features
 	 */
-	private void calcPfc(ArrayList<String> features) {
+	public void calcPfc(ArrayList<String> features) {
 		int c = countOfWordsDifCate.size();// 类别数
 		int n = features.size();// 特征数
+		MyLogger logger=new MyLogger("Pfc.txt");
 		pOfWordInDifCate = new ArrayList<ArrayList<Double>>(c);
 		for (int i = 0; i < c; i++) {
 			ArrayList<Double> resList = new ArrayList<Double>(n);
-			for (String string : features) {
-				int index = featureCode.get(string);
-				ArrayList<Integer> tmpCounts = countOfWordsDifCate.get(i);
+			for (int index = 0; index < n; index++) {
+				ArrayList<Integer> tmpCounts = countOfWordsDifCate.get(i);//所有特征出现在一个类别中的文档个数
 				double p = (double) (tmpCounts.get(index) + 1)
-						/ (tmpCounts.get(tmpCounts.size() - 1) + 2);
+						/ (diffCateNum.get(i) + 2);
 				resList.add(p);
 			}
+			logger.info("c1:\t"+resList.toString()+"\r\n");
 			pOfWordInDifCate.add(resList);
 		}
 	}
 
-	private void calcPc() {
+	public void calcPc() {
 		int c = countOfWordsDifCate.size();
 		pOfACate = new ArrayList<Double>(c);
 		for (int i = 0; i < c; i++) {

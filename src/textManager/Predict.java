@@ -16,17 +16,13 @@ import jxl.write.biff.RowsExceededException;
  */
 public class Predict {
 	private ArrayList<ArrayList<Double>> pOfWordInDifCate;// P(f|c)
-	private ArrayList<Double> pOfACate;//P(c)
+	private ArrayList<Double> pOfACate;// P(c)
 
-	private ArrayList<ArrayList<Integer>> countOfWordsDifCate;
-	private HashMap<String, Integer> featureCode;
-	MyLogger logger=new MyLogger("评论以及其特征的概率.txt");
+	MyLogger logger = new MyLogger("评论以及其特征的概率.txt");
 
 	public Predict(TrainSet trainSet, CalculateP calculateP) {
-		countOfWordsDifCate = trainSet.getCountOfWordsDifCate();
-		featureCode = trainSet.getFeatureCode();
 		pOfWordInDifCate = calculateP.getpOfWordInDifCate();
-		pOfACate=calculateP.getpOfACate();
+		pOfACate = calculateP.getpOfACate();
 	}
 
 	/**
@@ -39,26 +35,25 @@ public class Predict {
 	 * @return 类别的编号
 	 */
 	private int predict(AnalReview review, ArrayList<String> features) {
-		int n = countOfWordsDifCate.size();//类别数
+		int n = pOfWordInDifCate.size();// 类别数
 		int resultIndex = 0;
 		double finalP = -Double.MAX_VALUE;
-		logger.info(review.getText().substring(0, 1)+"\t");
+		logger.info(review.getText().substring(0, 1) + "\t");
 		for (int i = 0; i < n; i++) {
 			double p = Math.log(pOfACate.get(i));
 			HashMap<String, Integer> reviewWords = review.getFrequency();
-			for (String string : features) {
-				int index=featureCode.get(string);
-				if (reviewWords.containsKey(string)) {
-					p+=Math.log(pOfWordInDifCate.get(i).get(index));
+			for (int index = 0; index < pOfWordInDifCate.size(); index++) {
+				if (reviewWords.containsKey(features.get(index))) {
+					p += Math.log(pOfWordInDifCate.get(i).get(index));
 				} else {
-					p+=Math.log(1-pOfWordInDifCate.get(i).get(index));
+					p += Math.log(1 - pOfWordInDifCate.get(i).get(index));
 				}
 			}
 			if (finalP < p) {
 				finalP = p;
 				resultIndex = i;
 			}
-			logger.info("ca"+i+"\t"+p+"\t");
+			logger.info("ca" + i + "\t" + p + "\t");
 		}
 		logger.info("\r\n");
 		return resultIndex;
