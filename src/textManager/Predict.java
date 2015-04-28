@@ -3,6 +3,8 @@ package textManager;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import utils.AnalReview;
+import utils.MyLogger;
 import jxl.write.Label;
 import jxl.write.WritableSheet;
 import jxl.write.WriteException;
@@ -20,7 +22,7 @@ public class Predict {
 
 	MyLogger logger = new MyLogger("评论以及其特征的概率.txt");
 
-	public Predict(TrainSet trainSet, CalculateP calculateP) {
+	public Predict(CalculateP calculateP) {
 		pOfWordInDifCate = calculateP.getpOfWordInDifCate();
 		pOfACate = calculateP.getpOfACate();
 	}

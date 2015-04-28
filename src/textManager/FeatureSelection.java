@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Logger;
 
+import utils.MyLogger;
 import jxl.write.Label;
 import jxl.write.WritableSheet;
 import jxl.write.WriteException;
@@ -25,35 +26,32 @@ import jxl.write.biff.RowsExceededException;
  *
  */
 public class FeatureSelection {
-	private ArrayList<Integer> featureCount;// 该特征在所有文档中的出现次数
-	private ArrayList<Integer> diffCateNum;// 不同类别的文本个数
-	private ArrayList<ArrayList<Integer>> countOfWordsDifCate;// 词在不同类别中的计数
-	private int trainSize;
-
 	private List<Map.Entry<String, Integer>> features;
 
-	public FeatureSelection(TrainSet trainSet,CountNum countNum) {
-		featureCount=countNum.getFeatureCount();
-		diffCateNum=countNum.getDiffCateNum();
-		countOfWordsDifCate=countNum.getCountOfWordsDifCate();
-		trainSize=trainSet.getAllTrainSet().size();
-	}
-	
 	public ArrayList<String> IGSelection(ArrayList<String> features,
-			int afterSize) {
+			int afterSize, CountNum countNum) {
+		ArrayList<Integer> featureCount = countNum.getFeatureCount();// 该特征在所有文档中的出现次数
+		ArrayList<Integer> cateCount = countNum.getDiffCateNum();// 不同类别的文本个数
+		ArrayList<ArrayList<Integer>> countOfWordsDifCate = countNum
+				.getCountOfWordsDifCate();//不同类别下不同特征的出现次数
+		int totalSize = countNum.getTotalSize();
+
 		int beforeSize = features.size();
 		Map<String, Double> featureIG = new HashMap<String, Double>(beforeSize);// 不同特征的IG值
+
 		for (int i = 0; i < features.size(); i++) {
 			double Hcf = 0;
 			double sum = 0;
+			int Nf = featureCount.get(i);
 			for (int k = 0; k < 2; k++) {
-				int Nf = featureCount.get(i);
 				if (k == 1)
-					Nf = 1 - Nf;
-				double Pf = (double) Nf / trainSize;
+					Nf = totalSize - Nf;// N_f
+				double Pf = (double) Nf / totalSize;
 				for (int j = 0; j < countOfWordsDifCate.size(); j++) {// 不同类别
-					int Nc = diffCateNum.get(j);
-					double Pcf = (double) Nc / Nf;
+					int Ncf = countOfWordsDifCate.get(j).get(i);// 该类别下游多少个包含该特征的文档Nc,f
+					if (k == 1)
+						Ncf = cateCount.get(j) - Ncf;// Nc,_f
+					double Pcf = (double) Ncf / Nf;
 					sum += Pcf * (Math.log(Pcf + Double.MIN_VALUE));
 				}
 				Hcf += Pf * sum;
@@ -80,8 +78,11 @@ public class FeatureSelection {
 		});
 
 		ArrayList<String> afterFeatures = new ArrayList<String>(afterSize);
+		MyLogger logger = new MyLogger("特征IG.txt");
 		for (int i = 0; i < afterSize; i++) {
-			afterFeatures.add(sortedIG.get(i).getKey());
+			Entry<String, Double> entry = sortedIG.get(i);
+			afterFeatures.add(entry.getKey());
+			logger.info(entry + "\r\n");
 		}
 		return afterFeatures;
 	}
@@ -113,10 +114,10 @@ public class FeatureSelection {
 	 * @param k
 	 */
 	public void delTopK(int k) {
-		Logger logger = Logger.getLogger("删除高频词");
+		MyLogger logger = new MyLogger("删除高频词.txt");
 		for (int i = 0; i < k; i++) {
 			int last = features.size() - 1;
-			logger.info(features.get(last).toString());
+			logger.info(features.get(last).toString()+"\r\n");
 			features.remove(last);
 		}
 	}
@@ -129,9 +130,9 @@ public class FeatureSelection {
 	 */
 	public void delLessThan(int num) {
 		int i = 0;
-		Logger logger = Logger.getLogger("删除出现很少的词");
+		MyLogger logger = new MyLogger("删除很少出现的词.txt");
 		while (features.get(i).getValue() <= num) {
-			logger.info(features.get(i).toString());
+			logger.info(features.get(i).toString()+"\r\n");
 			features.remove(i);
 		}
 	}
@@ -151,7 +152,7 @@ public class FeatureSelection {
 			k++;
 		}
 		System.out.println(features);
-		System.out.println("总词数：" + k);
+		System.out.println("del后总词数：" + k);
 	}
 
 	public List<Map.Entry<String, Integer>> getFeatures() {

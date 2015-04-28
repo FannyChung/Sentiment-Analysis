@@ -23,13 +23,12 @@ import jxl.write.biff.RowsExceededException;
 
 public class Controller {
 	private AnalysisText textAnal = new AnalysisText();
-	private FeatureSelection featureSelection ;
+	private FeatureSelection featureSelection;
 	private TrainSet trainSet = new TrainSet();
-	CalculateP calculateP;
-	CountNum countNum;
-	ArrayList<String> aftFt;
-	int a[] = { 1, 2, 3, 4, 5 };
-	ArrayList<String> features;
+	private CalculateP calculateP;
+	private CountNum countNum;
+	private int a[] = { 1, 2, 3, 4, 5 };
+	private ArrayList<String> features;
 
 	private WritableWorkbook book;
 	private int sheetNum;
@@ -43,13 +42,10 @@ public class Controller {
 			book = Workbook.createWorkbook(new File("result.xls"), wb);
 			sheetNum = dataSheetNum - 1;
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (BiffException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
@@ -72,7 +68,6 @@ public class Controller {
 	public void wordSegmentation() {
 		textAnal.initNlpri();
 		try {
-
 			WritableSheet sheet;
 			// 读表格中的信息
 			for (int i = 0; i < dataSheetNum; i++) {
@@ -93,16 +88,51 @@ public class Controller {
 	}
 
 	/**
+	 * 特征选择
+	 */
+	public void featureSel() {
+		WritableSheet sheet;
+		countNum = new CountNum();
+		countNum.analReviews(textAnal.getReviews());
+
+		featureSelection = new FeatureSelection();
+		featureSelection.sortByFreq(countNum.getFrequency());
+		featureSelection.delLessThan(2);
+		featureSelection.delTopK(10);
+		features = featureSelection.getFeatureString();
+		sheet = book.createSheet("第一次特征筛选后", sheetNum++);
+		try {
+			featureSelection.writeFeature(sheet);
+
+			// countNum.splitReviewsByLev(textAnal.getReviews(), a);
+			// countNum.countFeatureInCates(features);
+			// features = featureSelection.IGSelection(features, 3000,
+			// countNum);
+
+			// features = countNum.getFeatureString();
+			// countNum.countFeatureInCates(features);
+
+			// 将词频信息写入表单中
+			sheet = book.createSheet("总词频", sheetNum++);
+			countNum.writeFrequecy(sheet);
+			//
+			// sheet = book.createSheet("词在不同类别中出现的次数", sheetNum++);
+			// countNum.writeCount(sheet, features);
+		} catch (WriteException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
 	 * 选择训练集
 	 */
 	public void seleTrainSet() {
+		// trainSet.seleTrain(a, 300, textAnal.getReviews());
+		trainSet.seleTrain(a, 0.8, textAnal.getReviews());
 
-		trainSet.seleTrain(a, 200, textAnal.getReviews());
-		// trainSet.seleTrain(a, 0.8, textAnal.getReviews());
 		WritableSheet sheet;
 		for (int i = 0; i < a.length; i++) {
-			sheet = book.createSheet("选择的训练集" + (i + 1),
-					sheetNum++);
+			sheet = book.createSheet("选择的训练集" + (i + 1), sheetNum++);
 			try {
 				textAnal.writeReviews(sheet, trainSet.getDiffCateTrainSet()
 						.get(i));
@@ -110,63 +140,27 @@ public class Controller {
 				e.printStackTrace();
 			}
 		}
-
-		countNum = new CountNum(trainSet);
-		// ArrayList<String> features = featureSelection.getFeatureString();
-		features = countNum.getFeatureString();
-		countNum.countAll(features);
-		countNum.analAll(countNum.getFrequency(),textAnal.getReviews());
-		try {
-		// 将词频信息写入表单中
-		sheet = book.createSheet("总词频", sheetNum++);
-		countNum.writeFrequecy(sheet);
-		
-		sheet = book.createSheet("词在不同类别中出现的次数", sheetNum++);
-		
-			countNum.writeCount(sheet, features);
-		} catch (WriteException e) {
-			e.printStackTrace();
-		}
-
-	}
-
-	/**
-	 * 特征选择
-	 */
-	public void featureSel() {
-		featureSelection= new FeatureSelection(trainSet, countNum);
-		featureSelection.sortByFreq(textAnal.getFrequency());
-		featureSelection.delLessThan(2);
-		featureSelection.delTopK(10);
-		
-		WritableSheet sheet = book.createSheet("筛选后的特征", sheetNum++);
-		try {
-			featureSelection.writeFeature(sheet);
-		} catch (WriteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 	}
 
 	public void training() {
-		calculateP = new CalculateP(trainSet, countNum);
-		// ArrayList<String> aftFt=calculateP.IGSelection(features, 4000);
-		aftFt = features;
+		countNum.splitReviewsByLev(trainSet.getAllTrainSet(), a);
+		countNum.countFeatureInCates(features);
 
+		calculateP = new CalculateP(trainSet, countNum);
 		calculateP.calcPc();
-		calculateP.calcPfc(aftFt);
+		calculateP.calcPfc(features);
 	}
 
 	public void predict() {
-		Predict predict = new Predict(trainSet, calculateP);
+		Predict predict = new Predict(calculateP);
 		WritableSheet sheet;
 		try {
 			ArrayList<Integer> results = predict.predictRevs(
-					trainSet.getTestSet(), aftFt);
+					trainSet.getTestSet(), features);
 			sheet = book.createSheet("预测_测试集", sheetNum++);
 			predict.writePredResult(trainSet.getTestSet(), sheet, results, a);
 
-			results = predict.predictRevs(trainSet.getAllTrainSet(), aftFt);
+			results = predict.predictRevs(trainSet.getAllTrainSet(), features);
 			sheet = book.createSheet("预测_训练集", sheetNum++);
 			predict.writePredResult(trainSet.getAllTrainSet(), sheet, results,
 					a);
@@ -175,6 +169,7 @@ public class Controller {
 		} catch (WriteException e) {
 			e.printStackTrace();
 		}
+		System.out.println("featureSize" + features.size());
 	}
 
 	public static void main(String[] args) {
@@ -182,8 +177,8 @@ public class Controller {
 		controller.openExcel();
 
 		controller.wordSegmentation();
-		controller.seleTrainSet();
 		controller.featureSel();
+		controller.seleTrainSet();
 		controller.training();
 		controller.predict();
 

@@ -14,7 +14,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 
-import textManager.NlpirTest.CLibrary;
+import utils.AnalReview;
+import utils.NlpirTest.CLibrary;
 import jxl.Sheet;
 import jxl.Workbook;
 import jxl.read.biff.BiffException;
@@ -127,8 +128,6 @@ public class AnalysisText {
 		reviews.add(review);
 	}
 
-	
-
 	/**
 	 * 在控制台打印所有分析过的评论信息输出
 	 */
@@ -220,13 +219,7 @@ public class AnalysisText {
 		}
 	}
 
-
-
-
 	public ArrayList<AnalReview> getReviews() {
 		return reviews;
 	}
-	
-
-
 }
