@@ -39,7 +39,7 @@ public class FeatureSelection {
 		int beforeSize = features.size();
 		Map<String, Double> featureIG = new HashMap<String, Double>(beforeSize);// 不同特征的IG值
 
-		for (int i = 0; i < features.size(); i++) {
+		for (int i = 0; i < features.size(); i++) { 	
 			double Hcf = 0;
 			double sum = 0;
 			int Nf = featureCount.get(i);

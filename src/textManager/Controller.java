@@ -97,7 +97,7 @@ public class Controller {
 
 		featureSelection = new FeatureSelection();
 		featureSelection.sortByFreq(countNum.getFrequency());
-		featureSelection.delLessThan(2);
+		featureSelection.delLessThan(3);
 		featureSelection.delTopK(10);
 		features = featureSelection.getFeatureString();
 		sheet = book.createSheet("第一次特征筛选后", sheetNum++);
@@ -115,9 +115,6 @@ public class Controller {
 			// 将词频信息写入表单中
 			sheet = book.createSheet("总词频", sheetNum++);
 			countNum.writeFrequecy(sheet);
-			//
-			// sheet = book.createSheet("词在不同类别中出现的次数", sheetNum++);
-			// countNum.writeCount(sheet, features);
 		} catch (WriteException e) {
 			e.printStackTrace();
 		}
@@ -127,8 +124,8 @@ public class Controller {
 	 * 选择训练集
 	 */
 	public void seleTrainSet() {
-		// trainSet.seleTrain(a, 300, textAnal.getReviews());
-		trainSet.seleTrain(a, 0.8, textAnal.getReviews());
+//		trainSet.seleTrain(a, 300, textAnal.getReviews());
+		 trainSet.seleTrain(a, 0.8, textAnal.getReviews());
 
 		WritableSheet sheet;
 		for (int i = 0; i < a.length; i++) {
@@ -148,7 +145,15 @@ public class Controller {
 
 		calculateP = new CalculateP(trainSet, countNum);
 		calculateP.calcPc();
-		calculateP.calcPfc(features);
+		calculateP.calcPfc();
+		WritableSheet sheet;
+
+		sheet = book.createSheet("词在不同类别中出现的次数", sheetNum++);
+		try {
+			countNum.writeCount(sheet, features,calculateP.getpOfWordInDifCate());
+		} catch (WriteException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public void predict() {

@@ -37,25 +37,26 @@ public class Predict {
 	 * @return 类别的编号
 	 */
 	private int predict(AnalReview review, ArrayList<String> features) {
-		int n = pOfWordInDifCate.size();// 类别数
+		int c = pOfWordInDifCate.size();// 类别数
+		int n=features.size();
 		int resultIndex = 0;
 		double finalP = -Double.MAX_VALUE;
 		logger.info(review.getText().substring(0, 1) + "\t");
-		for (int i = 0; i < n; i++) {
-			double p = Math.log(pOfACate.get(i));
-			HashMap<String, Integer> reviewWords = review.getFrequency();
-			for (int index = 0; index < pOfWordInDifCate.size(); index++) {
-				if (reviewWords.containsKey(features.get(index))) {
-					p += Math.log(pOfWordInDifCate.get(i).get(index));
+		for (int cateIndex = 0; cateIndex < c; cateIndex++) {
+			double p = Math.log(pOfACate.get(cateIndex));
+			HashMap<String, Integer> reviewWords = review.getFrequency();//该评论的词集
+			for (int featureIndex = 0; featureIndex < n; featureIndex++) {
+				if (reviewWords.containsKey(features.get(featureIndex))) {
+					p += Math.log(pOfWordInDifCate.get(cateIndex).get(featureIndex));
 				} else {
-					p += Math.log(1 - pOfWordInDifCate.get(i).get(index));
+					p += Math.log(1 - pOfWordInDifCate.get(cateIndex).get(featureIndex));
 				}
 			}
 			if (finalP < p) {
 				finalP = p;
-				resultIndex = i;
+				resultIndex = cateIndex;
 			}
-			logger.info("ca" + i + "\t" + p + "\t");
+			logger.info("ca" + cateIndex + "\t" + p + "\t");
 		}
 		logger.info("\r\n");
 		return resultIndex;

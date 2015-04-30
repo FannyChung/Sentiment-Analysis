@@ -22,13 +22,12 @@ import utils.MyLogger;
 public class CalculateP {
 	private ArrayList<ArrayList<Integer>> countOfWordsDifCate;// 特征 类别计数
 	private int sampleSize;
-	private ArrayList<Integer> diffCateNum;// 不同类别的文本个数,N_c
+	private ArrayList<Integer> diffCateNum;// 不同类别的文本个数,Nc
 
 	private ArrayList<ArrayList<Double>> pOfWordInDifCate;// P(f|c)
 	private ArrayList<Double> pOfACate;// P(c)
 
-	
-	public CalculateP(TrainSet trainSet,CountNum countNum) {
+	public CalculateP(TrainSet trainSet, CountNum countNum) {
 		countOfWordsDifCate = countNum.getCountOfWordsDifCate();
 		sampleSize = trainSet.getAllTrainSet().size();
 		diffCateNum = countNum.getDiffCateNum();
@@ -39,22 +38,23 @@ public class CalculateP {
 	 * 
 	 * @param features
 	 */
-	public void calcPfc(ArrayList<String> features) {
-		int c = countOfWordsDifCate.size();// 类别数
-		int n = features.size();// 特征数
-		MyLogger logger=new MyLogger("Pfc.txt");
-		pOfWordInDifCate = new ArrayList<ArrayList<Double>>(c);
-		for (int i = 0; i < c; i++) {
-			logger.info("\r\n\r\n"+"c"+i+":\r\n");
-			ArrayList<Double> resList = new ArrayList<Double>(n);
-			for (int index = 0; index < n; index++) {
-				ArrayList<Integer> tmpCounts = countOfWordsDifCate.get(i);//所有特征出现在一个类别中的文档个数
-				double p = (double) (tmpCounts.get(index) + 1)
-						/ (diffCateNum.get(i) + 2);
+	public void calcPfc() {
+		int cateSize = countOfWordsDifCate.size();// 类别数
+		int featureSize = countOfWordsDifCate.get(0).size();// 特征数
+		MyLogger logger = new MyLogger("Pfc.txt");
+		pOfWordInDifCate = new ArrayList<ArrayList<Double>>(cateSize);//二维数组，外面是类别，里面是特征词
+		for (int cateIndex = 0; cateIndex < cateSize; cateIndex++) {
+			logger.info("\r\n\r\n" + "c" + cateIndex + ":\r\n");
+			ArrayList<Double> resList = new ArrayList<Double>(featureSize);
+			ArrayList<Integer> tmpCounts = countOfWordsDifCate.get(cateIndex);// 所有特征出现在一个类别中的文档个数
+			for (int featureIndex = 0; featureIndex < featureSize; featureIndex++) {
+				int a = tmpCounts.get(featureIndex);
+				int b = diffCateNum.get(cateIndex);
+				double p = (double) (a + 1) / (b + 2);
 				resList.add(p);
-				logger.info(p+"\t");
+				logger.info(p + "\r\n");
 			}
-//			logger.info(resList.toString()+"\r\n");
+			// logger.info(resList.toString()+"\r\n");
 			pOfWordInDifCate.add(resList);
 		}
 	}

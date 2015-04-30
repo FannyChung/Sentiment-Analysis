@@ -28,8 +28,8 @@ public class CountNum {
 	private ArrayList<ArrayList<Integer>> countOfWordsDifCate;// 词在不同类别中的计数
 	private int totalSize;
 	private HashMap<String, Integer> frequency = new HashMap<String, Integer>();
-	MyLogger logger1=new MyLogger("不同类别的文本个数.txt");
-	MyLogger logger2=new MyLogger("不同特征的文本个数.txt");
+	MyLogger logger1 = new MyLogger("不同类别的文本个数.txt");
+	MyLogger logger2 = new MyLogger("不同特征的文本个数.txt");
 
 	/**
 	 * 将所有类别的评论按星级分类
@@ -37,28 +37,29 @@ public class CountNum {
 	 * @param reviews
 	 * @param reviewLevels
 	 */
-	public void splitReviewsByLev(ArrayList<AnalReview> reviews,int reviewLevels[]) {
-		totalSize=reviews.size();
-		int cateNum=reviewLevels.length;
-		diffCateDataSet=new ArrayList<ArrayList<AnalReview>>(cateNum);
+	public void splitReviewsByLev(ArrayList<AnalReview> reviews,
+			int reviewLevels[]) {// 注意这个数组，
+		totalSize = reviews.size();
+		int cateNum = reviewLevels.length;
+		diffCateDataSet = new ArrayList<ArrayList<AnalReview>>(cateNum);
 		for (int i = 0; i < reviewLevels.length; i++) {
 			diffCateDataSet.add(new ArrayList<AnalReview>());
 		}
 		for (AnalReview analReview : reviews) {
-			int level=analReview.getLevel();
+			int level = analReview.getLevel();
 			for (int i = 0; i < reviewLevels.length; i++) {
-				if(reviewLevels[i]==level){
+				if (reviewLevels[i] == level) {
 					diffCateDataSet.get(i).add(analReview);
 				}
 			}
 		}
-		//计算不同类别下的文档个数
+		// 计算不同类别下的文档个数
 		int n = diffCateDataSet.size();// 类别个数
 		diffCateNum = new ArrayList<Integer>(n);
 		for (ArrayList<AnalReview> arrayList : diffCateDataSet) {// size=每个类别中的文档数
 			diffCateNum.add(arrayList.size());
 		}
-		logger1.info(diffCateNum.toString()+"\r\n\r\n\r\n");
+		logger1.info(diffCateNum.toString() + "\r\n\r\n\r\n");
 	}
 
 	/**
@@ -106,10 +107,10 @@ public class CountNum {
 			for (int j = 0; j < n; j++) {
 				sum += countOfWordsDifCate.get(j).get(i);
 			}
-			logger2.info(features.get(i)+"\t"+sum+"\r\n");
+			logger2.info(features.get(i) + "\t" + sum + "\r\n");
 			featureCount.add(sum);
 		}
-//		logger2.info("\r\n");
+		// logger2.info("\r\n");
 	}
 
 	/**
@@ -122,20 +123,33 @@ public class CountNum {
 	 * @throws RowsExceededException
 	 * @throws WriteException
 	 */
-	public void writeCount(WritableSheet sheet, ArrayList<String> features)
+	public void writeCount(WritableSheet sheet, ArrayList<String> features,
+			ArrayList<ArrayList<Double>> pOfWordInDifCate)
 			throws RowsExceededException, WriteException {
-		int i = 0;
+		int i = 0;// 行数,i变化，为在同一行
+		int j = 0;
 		Label label;
 		for (String string : features) {
-			label = new Label(0, i, string);
+			label = new Label(i, j, string);
 			sheet.addCell(label);
-			i++;
+			j++;
 		}
 		i = 1;
 		for (ArrayList<Integer> arrayList : countOfWordsDifCate) {
-			int j = 0;
+			j = 0;
 			for (Integer integer : arrayList) {
 				label = new Label(i, j, integer.toString());
+				sheet.addCell(label);
+				j++;
+			}
+			i++;
+		}
+
+		i = 6;
+		for (ArrayList<Double> arrayList : pOfWordInDifCate) {
+			j = 0;
+			for (Double double1 : arrayList) {
+				label = new Label(i, j, double1.toString());
 				sheet.addCell(label);
 				j++;
 			}

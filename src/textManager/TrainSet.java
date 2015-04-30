@@ -6,6 +6,7 @@ package textManager;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -27,6 +28,42 @@ public class TrainSet {
 	private ArrayList<ArrayList<AnalReview>> diffCateTrainSet;// 不同类别的训练集
 	private ArrayList<AnalReview> allTrainSet;
 
+	private ArrayList<Integer> randomSet(int range, int size) {
+		ArrayList<Integer> integers=new ArrayList<Integer>(size);
+		Random rand = new Random();
+		boolean[] exits = new boolean[range];
+		int randInt = 0;
+		for (int i = 0; i < size; i++) {
+			do{
+				randInt=rand.nextInt(range);
+			}while(exits[randInt]);
+			integers.add(randInt);
+			exits[randInt]=true;
+		}
+		return integers;
+	}
+
+	/**
+	 * 生成随机序列的评论集合
+	 * 
+	 * @param reviews
+	 *            输入的评论集合
+	 * @return 输出的评论集合，顺序是随机的
+	 */
+	private ArrayList<AnalReview> genRandAnalReviews(
+			ArrayList<AnalReview> reviews) {
+		int totalSize = reviews.size();
+		ArrayList<Integer> integers=randomSet(totalSize, totalSize);// 打乱reviews的排序
+		ArrayList<AnalReview> tmpAnalReviews = new ArrayList<AnalReview>(
+				totalSize);
+		Iterator<Integer> itr = integers.iterator();
+		while (itr.hasNext()) {
+			Integer i = itr.next();
+			tmpAnalReviews.add(reviews.get(i));
+		}
+		return tmpAnalReviews;
+	}
+
 	/**
 	 * 按百分比随机选择训练集
 	 * 
@@ -41,36 +78,27 @@ public class TrainSet {
 		int totalSize = reviews.size();
 		int cateNum = a.length;
 		int trainSize = (int) (totalSize * percent);
-		Set<AnalReview> trainSetTmp = new HashSet<AnalReview>();
+		reviews = genRandAnalReviews(reviews);// 打乱评论的顺序
+		System.out.println(reviews.size());
 		diffCateTrainSet = new ArrayList<ArrayList<AnalReview>>(cateNum);
+		allTrainSet = new ArrayList<AnalReview>(trainSize);
+
 		for (int i = 0; i < a.length; i++) {
 			diffCateTrainSet.add(new ArrayList<AnalReview>());
 		}
-		// TODO 使得trainSize<所有符合类别的评论的个数
-		if(trainSize>reviews.size()){
-			System.err.println("请使得训练集更小！");
-			System.exit(0);
-		}
-
-		Random rand = new Random();
-		for (int i = 0; i < trainSize;) {
-			int index = rand.nextInt(totalSize);
-			AnalReview review = reviews.get(index);
-			for (int j = 0; j < a.length; j++) {
+		int i = 0;
+		for (; i < trainSize; i++) {// 前面指定百分比的评论加入到训练集
+			AnalReview review = reviews.get(i);
+			allTrainSet.add(review);
+			for (int j = 0; j < a.length; j++) {// 判断属于哪个类别，加入到对应的集合中
 				if (review.getLevel() == a[j]) {
-					if (trainSetTmp.add(review)) {
-						i++;
-						diffCateTrainSet.get(j).add(review);
-					}
+					diffCateTrainSet.get(j).add(review);
 				}
 			}
 		}
-		allTrainSet = new ArrayList<AnalReview>(trainSize);
-		allTrainSet.addAll(trainSetTmp);
 
-		for (AnalReview analReview : reviews) {
-			if (!trainSetTmp.contains(analReview))
-				testSet.add(analReview);
+		for (; i < totalSize; i++) {// 后面剩下的加入测试集
+			testSet.add(reviews.get(i));
 		}
 		System.out.println("测试集大小：" + allTrainSet.size());
 		System.out.println("训练集大小：" + testSet.size());
@@ -86,6 +114,8 @@ public class TrainSet {
 	 */
 	public void seleTrain(int a[], int numOfEach, ArrayList<AnalReview> reviews) {
 		int n = a.length;
+		reviews = genRandAnalReviews(reviews);// 打乱评论的顺序
+
 		Map<Integer, Integer> cateLevel2cateNum = new HashMap<Integer, Integer>(
 				n);
 		allTrainSet = new ArrayList<AnalReview>(numOfEach * n);
