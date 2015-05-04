@@ -28,17 +28,26 @@ public class TrainSet {
 	private ArrayList<ArrayList<AnalReview>> diffCateTrainSet;// 不同类别的训练集
 	private ArrayList<AnalReview> allTrainSet;
 
+	/**
+	 * 生成一个随机序列
+	 * 
+	 * @param range
+	 *            随机序列中数字的范围
+	 * @param size
+	 *            随机序列的个数
+	 * @return 随机序列
+	 */
 	private ArrayList<Integer> randomSet(int range, int size) {
-		ArrayList<Integer> integers=new ArrayList<Integer>(size);
+		ArrayList<Integer> integers = new ArrayList<Integer>(size);
 		Random rand = new Random();
 		boolean[] exits = new boolean[range];
 		int randInt = 0;
 		for (int i = 0; i < size; i++) {
-			do{
-				randInt=rand.nextInt(range);
-			}while(exits[randInt]);
+			do {
+				randInt = rand.nextInt(range);
+			} while (exits[randInt]);
 			integers.add(randInt);
-			exits[randInt]=true;
+			exits[randInt] = true;
 		}
 		return integers;
 	}
@@ -53,7 +62,7 @@ public class TrainSet {
 	private ArrayList<AnalReview> genRandAnalReviews(
 			ArrayList<AnalReview> reviews) {
 		int totalSize = reviews.size();
-		ArrayList<Integer> integers=randomSet(totalSize, totalSize);// 打乱reviews的排序
+		ArrayList<Integer> integers = randomSet(totalSize, totalSize);// 打乱reviews的排序
 		ArrayList<AnalReview> tmpAnalReviews = new ArrayList<AnalReview>(
 				totalSize);
 		Iterator<Integer> itr = integers.iterator();
@@ -67,41 +76,47 @@ public class TrainSet {
 	/**
 	 * 按百分比随机选择训练集
 	 * 
-	 * @param a
-	 *            对应分类的数组
+	 * @param b
+	 *            预测分类的数组
 	 * @param percent
 	 *            训练集占所有数据集的百分比
 	 * @param reviews
 	 *            所有的数据集
 	 */
-	public void seleTrain(int a[], double percent, ArrayList<AnalReview> reviews) {
+	public void seleTrain(int b[], double percent, ArrayList<AnalReview> reviews) {
 		int totalSize = reviews.size();
-		int cateNum = a.length;
+		int cateNum = b.length;
 		int trainSize = (int) (totalSize * percent);
 		reviews = genRandAnalReviews(reviews);// 打乱评论的顺序
 		System.out.println(reviews.size());
 		diffCateTrainSet = new ArrayList<ArrayList<AnalReview>>(cateNum);
 		allTrainSet = new ArrayList<AnalReview>(trainSize);
 
-		for (int i = 0; i < a.length; i++) {
+		for (int i = 0; i < cateNum; i++) {
 			diffCateTrainSet.add(new ArrayList<AnalReview>());
 		}
 		int i = 0;
-		for (; i < trainSize; i++) {// 前面指定百分比的评论加入到训练集
+		int currentSize = 0;
+		for (; currentSize < trainSize && i < totalSize; i++) {// 前面指定百分比且指定类别的评论加入到训练集
 			AnalReview review = reviews.get(i);
-			allTrainSet.add(review);
-			for (int j = 0; j < a.length; j++) {// 判断属于哪个类别，加入到对应的集合中
-				if (review.getLevel() == a[j]) {
+			boolean added = false;
+			for (int j = 0; j < cateNum; j++) {// 判断属于哪个类别，加入到对应的集合中
+				if (review.getLevel() == b[j]) {
 					diffCateTrainSet.get(j).add(review);
+					allTrainSet.add(review);
+					currentSize++;
+					added = true;
 				}
 			}
+			if (!added)
+				testSet.add(review);
 		}
 
 		for (; i < totalSize; i++) {// 后面剩下的加入测试集
 			testSet.add(reviews.get(i));
 		}
-		System.out.println("测试集大小：" + allTrainSet.size());
-		System.out.println("训练集大小：" + testSet.size());
+		System.out.println("训练集大小：" + allTrainSet.size());
+		System.out.println("测试集大小：" + testSet.size());
 	}
 
 	/**
@@ -139,6 +154,8 @@ public class TrainSet {
 				testSet.add(analReview);
 			}
 		}
+		System.out.println("训练集大小：" + allTrainSet.size());
+		System.out.println("测试集大小：" + testSet.size());
 	}
 
 	/**
@@ -164,7 +181,7 @@ public class TrainSet {
 	}
 
 	/**
-	 * @return the allTrainSet
+	 * @return the allTrainSet 所有训练集（不分类别）
 	 */
 	public ArrayList<AnalReview> getAllTrainSet() {
 		return allTrainSet;

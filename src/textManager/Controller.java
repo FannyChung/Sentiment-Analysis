@@ -28,12 +28,16 @@ public class Controller {
 	private CalculateP calculateP;
 	private CountNum countNum;
 	private int a[] = { 1, 2, 3, 4, 5 };
+	private int b[] = { 1, 3, 5 };
 	private ArrayList<String> features;
 
 	private WritableWorkbook book;
 	private int sheetNum;
 	private int dataSheetNum = 5;
 
+	/**
+	 * 打开excel文件
+	 */
 	public void openExcel() {
 		InputStream stream;
 		try {
@@ -51,6 +55,9 @@ public class Controller {
 
 	}
 
+	/**
+	 * 关闭excel文件
+	 */
 	public void closeExcel() {
 		try {
 			book.write();
@@ -97,20 +104,16 @@ public class Controller {
 
 		featureSelection = new FeatureSelection();
 		featureSelection.sortByFreq(countNum.getFrequency());
-		featureSelection.delLessThan(3);
+		featureSelection.delLessThan(3);//删除高于
 		featureSelection.delTopK(10);
 		features = featureSelection.getFeatureString();
 		sheet = book.createSheet("第一次特征筛选后", sheetNum++);
 		try {
 			featureSelection.writeFeature(sheet);
 
-			// countNum.splitReviewsByLev(textAnal.getReviews(), a);
-			// countNum.countFeatureInCates(features);
-			// features = featureSelection.IGSelection(features, 3000,
-			// countNum);
-
-			// features = countNum.getFeatureString();
-			// countNum.countFeatureInCates(features);
+			countNum.splitReviewsByLev(textAnal.getReviews(), a);
+			countNum.countFeatureInCates(features);
+			features = featureSelection.IGSelection(features, 1000, countNum);
 
 			// 将词频信息写入表单中
 			sheet = book.createSheet("总词频", sheetNum++);
@@ -124,8 +127,8 @@ public class Controller {
 	 * 选择训练集
 	 */
 	public void seleTrainSet() {
-//		trainSet.seleTrain(a, 300, textAnal.getReviews());
-		 trainSet.seleTrain(a, 0.8, textAnal.getReviews());
+		// trainSet.seleTrain(a, 300, textAnal.getReviews());
+		trainSet.seleTrain(a, 0.8, textAnal.getReviews());
 
 		WritableSheet sheet;
 		for (int i = 0; i < a.length; i++) {
@@ -150,7 +153,8 @@ public class Controller {
 
 		sheet = book.createSheet("词在不同类别中出现的次数", sheetNum++);
 		try {
-			countNum.writeCount(sheet, features,calculateP.getpOfWordInDifCate());
+			countNum.writeCount(sheet, features,
+					calculateP.getpOfWordInDifCate());
 		} catch (WriteException e) {
 			e.printStackTrace();
 		}
@@ -159,16 +163,21 @@ public class Controller {
 	public void predict() {
 		Predict predict = new Predict(calculateP);
 		WritableSheet sheet;
+		ArrayList<Integer> results;
 		try {
-			ArrayList<Integer> results = predict.predictRevs(
-					trainSet.getTestSet(), features);
+			results = predict.predictRevs(trainSet.getTestSet(), features);
 			sheet = book.createSheet("预测_测试集", sheetNum++);
 			predict.writePredResult(trainSet.getTestSet(), sheet, results, a);
+			predict.statisticalRate(a, a, predict.genConfuMatrix(
+					trainSet.getTestSet(), results, a, a));
 
 			results = predict.predictRevs(trainSet.getAllTrainSet(), features);
 			sheet = book.createSheet("预测_训练集", sheetNum++);
 			predict.writePredResult(trainSet.getAllTrainSet(), sheet, results,
 					a);
+			predict.statisticalRate(a, a, predict.genConfuMatrix(
+					trainSet.getAllTrainSet(), results, a, a));
+
 		} catch (RowsExceededException e) {
 			e.printStackTrace();
 		} catch (WriteException e) {

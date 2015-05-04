@@ -14,7 +14,7 @@ import java.util.Map.Entry;
 import utils.MyLogger;
 
 /**
- * 计算各种概率
+ * 计算先验概率和条件概率
  * 
  * @author hp
  *

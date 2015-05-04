@@ -21,6 +21,7 @@ public class Predict {
 	private ArrayList<Double> pOfACate;// P(c)
 
 	MyLogger logger = new MyLogger("评论以及其特征的概率.txt");
+	MyLogger logger2 = new MyLogger("结果.txt");
 
 	public Predict(CalculateP calculateP) {
 		pOfWordInDifCate = calculateP.getpOfWordInDifCate();
@@ -38,18 +39,20 @@ public class Predict {
 	 */
 	private int predict(AnalReview review, ArrayList<String> features) {
 		int c = pOfWordInDifCate.size();// 类别数
-		int n=features.size();
+		int n = features.size();
 		int resultIndex = 0;
 		double finalP = -Double.MAX_VALUE;
 		logger.info(review.getText().substring(0, 1) + "\t");
 		for (int cateIndex = 0; cateIndex < c; cateIndex++) {
 			double p = Math.log(pOfACate.get(cateIndex));
-			HashMap<String, Integer> reviewWords = review.getFrequency();//该评论的词集
+			HashMap<String, Integer> reviewWords = review.getFrequency();// 该评论的词集
 			for (int featureIndex = 0; featureIndex < n; featureIndex++) {
 				if (reviewWords.containsKey(features.get(featureIndex))) {
-					p += Math.log(pOfWordInDifCate.get(cateIndex).get(featureIndex));
+					p += Math.log(pOfWordInDifCate.get(cateIndex).get(
+							featureIndex));
 				} else {
-					p += Math.log(1 - pOfWordInDifCate.get(cateIndex).get(featureIndex));
+					p += Math.log(1 - pOfWordInDifCate.get(cateIndex).get(
+							featureIndex));
 				}
 			}
 			if (finalP < p) {
@@ -113,5 +116,82 @@ public class Predict {
 
 			i++;
 		}
+	}
+
+	public int[][] genConfuMatrix(ArrayList<AnalReview> reviews,
+			ArrayList<Integer> results, int a[], int b[]) {// a实际分类（5）；b预测分类
+		int size = results.size();
+		int n = a.length;
+		int n2 = b.length;// 预测分类个数
+		int[][] ConfuMtr = new int[n][n2];// 默认每个元素为0
+		HashMap<Integer, Integer> catecode2cateNum_act = new HashMap<Integer, Integer>(
+				n);
+		for (int i = 0; i < n; i++) {
+			catecode2cateNum_act.put(a[i], i);
+		}
+		// 统计个数
+		for (int i = 0; i < size; i++) {// 所有的真实结果
+			int level = reviews.get(i).getLevel();
+			int level_code = catecode2cateNum_act.get(level);
+			int result = results.get(i);
+			ConfuMtr[level_code][result] += 1;
+		}
+		return ConfuMtr;
+	}
+
+	public void statisticalRate(int a[], int b[], int ConfuMtr[][]) {
+		int n = a.length;
+		int n2 = b.length;// 预测分类个数
+		double[] precision = new double[n2];
+		double[] recall = new double[n2];
+		double[] f1 = new double[n2];
+		double accuracy;
+		int correctSum = 0;
+		int allSum = 0;
+		double precisionAvg = 0;
+		double recallAvg = 0;
+		double f1Avg = 0;
+
+		int[] correctNum = new int[n2];
+		int[] sumPre = new int[n2];
+		int[] sumAct = new int[n];
+		for (int i = 0; i < n; i++) {
+			for (int j = 0; j < n2; j++) {
+				if (i == j)
+					correctNum[i] = ConfuMtr[i][j];
+				sumAct[i] += ConfuMtr[i][j];
+				sumPre[j] += ConfuMtr[i][j];
+				allSum += ConfuMtr[i][j];
+				logger2.info(ConfuMtr[i][j] + "\t");
+			}
+			logger2.info("\r\n");
+		}
+		logger2.info("\r\n");
+		logger2.info("precision\trecall\tf1\r\n");
+
+		for (int i = 0; i < n2; i++) {
+			precision[i] = (double) correctNum[i] / sumPre[i];
+			recall[i] = (double) correctNum[i] / sumAct[i];
+			f1[i] = 2 * precision[i] * recall[i]
+					/ (precision[i] + recall[i] + Double.MIN_VALUE);// 避免分母为0
+			logger2.info(precision[i] + "\t" + recall[i] + "\t" + f1[i]
+					+ "\r\n");
+			correctSum += correctNum[i];
+
+			double weight=pOfACate.get(i);//第i个类别的权重
+			precisionAvg += precision[i]*weight;
+			recallAvg += recall[i]*weight;
+			f1Avg += f1[i]*weight;
+		}
+		logger2.info("\r\n");
+		logger2.info(precisionAvg + "\t" + recallAvg + "\t" + f1Avg);
+		logger2.info("\r\n");
+		logger2.info("\r\n");
+		accuracy = (double) correctSum / allSum;
+		logger2.info("correctSum\taccuracy\r\n");
+		logger2.info(correctSum + "\t" + accuracy);
+		logger2.info("\r\n");
+		logger2.info("\r\n");
+		logger2.info("\r\n");
 	}
 }

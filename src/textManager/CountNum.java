@@ -75,9 +75,10 @@ public class CountNum {
 			ArrayList<AnalReview> reviewsOfACate) {
 		int n = 0;
 		for (AnalReview analReview : reviewsOfACate) {
-			// n += (analReview.getFrequency().getOrDefault(feature, 0));
-			if (analReview.getFrequency().containsKey(feature))// 该文档出现了该词，则该类别的特征出现文档数+1
-				n++;
+			n += (analReview.getFrequency().getOrDefault(feature, 0));
+			// if (analReview.getFrequency().containsKey(feature))//
+			// 该文档出现了该词，则该类别的特征出现文档数+1
+			// n++;
 		}
 		return n;
 	}
@@ -191,9 +192,37 @@ public class CountNum {
 		System.out.println("charSum" + charSum);
 		System.out.println("aveWords" + (double) wordSum / i);
 		System.out.println("aveChars" + (double) charSum / i);
-		System.out.println(frequency);
+//		System.out.println(frequency);
 	}
 
+	/**
+	 * 将词频信息(单词+次数)写入表单中
+	 * 
+	 * @param sheet
+	 *            要写的表单
+	 * @throws WriteException
+	 *             写错误
+	 * @throws RowsExceededException
+	 *             行错误
+	 */
+	public void writeFrequecy(WritableSheet sheet)
+			throws RowsExceededException, WriteException {
+		Label label;
+		Iterator<Entry<String, Integer>> iter = frequency.entrySet().iterator();
+		int k = 0;
+		while (iter.hasNext()) {
+			Entry<String, Integer> entry = iter.next();
+			String string = entry.getKey();
+			Integer sfre = entry.getValue();
+			label = new Label(0, k, string);
+			sheet.addCell(label);
+			label = new Label(1, k, sfre.toString());
+			sheet.addCell(label);
+			k++;
+		}
+		System.out.println("删除前总词数：" + k);
+	}
+	
 	/**
 	 * @return the featureCount 不同特征出现的文档个数
 	 */
@@ -218,45 +247,15 @@ public class CountNum {
 
 	public ArrayList<String> getFeatureString() {
 		ArrayList<String> result = new ArrayList<String>(frequency.size());
-		Iterator itr = frequency.entrySet().iterator();
+		Iterator<Entry<String, Integer>> itr = frequency.entrySet().iterator();
 		while (itr.hasNext()) {
-			Entry<String, Integer> entry = (Entry) itr.next();
+			Entry<String, Integer> entry = itr.next();
 			result.add(entry.getKey());
 		}
 		return result;
 	}
 
-	public HashMap<String, Integer> getFrequency() {
-		return frequency;
-	}
 
-	/**
-	 * 将词频信息(单词+次数)写入表单中
-	 * 
-	 * @param sheet
-	 *            要写的表单
-	 * @throws WriteException
-	 *             写错误
-	 * @throws RowsExceededException
-	 *             行错误
-	 */
-	public void writeFrequecy(WritableSheet sheet)
-			throws RowsExceededException, WriteException {
-		Label label;
-		Iterator<Entry<String, Integer>> iter = frequency.entrySet().iterator();
-		int k = 0;
-		while (iter.hasNext()) {
-			HashMap.Entry entry = iter.next();
-			String string = (String) entry.getKey();
-			Integer sfre = (Integer) entry.getValue();
-			label = new Label(0, k, string);
-			sheet.addCell(label);
-			label = new Label(1, k, sfre.toString());
-			sheet.addCell(label);
-			k++;
-		}
-		System.out.println("删除前总词数：" + k);
-	}
 
 	/**
 	 * @return the totalSize
@@ -265,6 +264,11 @@ public class CountNum {
 		return totalSize;
 	}
 
+
+	public HashMap<String, Integer> getFrequency() {
+		return frequency;
+	}
+	
 	/**
 	 * @param totalSize
 	 *            the totalSize to set

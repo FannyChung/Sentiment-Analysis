@@ -52,7 +52,7 @@ public class FeatureSelection {
 					if (k == 1)
 						Ncf = cateCount.get(j) - Ncf;// Nc,_f
 					double Pcf = (double) Ncf / Nf;
-					sum += Pcf * (Math.log(Pcf + Double.MIN_VALUE));
+					sum += Pcf * (Math.log(Pcf + Double.MIN_VALUE));//避免出现log(0)
 				}
 				Hcf += Pf * sum;
 			}
@@ -105,7 +105,7 @@ public class FeatureSelection {
 								- secondMapEntry.getValue();
 					}
 				});
-		System.out.println("after sort\n" + features.toString());
+		System.out.println("after sort\t" + features.toString());
 	}
 
 	/**
