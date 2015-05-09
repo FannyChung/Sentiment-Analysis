@@ -27,9 +27,13 @@ public class CalculateP {
 	private ArrayList<ArrayList<Double>> pOfWordInDifCate;// P(f|c)
 	private ArrayList<Double> pOfACate;// P(c)
 
-	public CalculateP(TrainSet trainSet, CountNum countNum) {
+	/**
+	 * @param trainSize 训练集大小
+	 * @param countNum 计数信息
+	 */
+	public CalculateP(int trainSize, CountNum countNum) {
 		countOfWordsDifCate = countNum.getCountOfWordsDifCate();
-		sampleSize = trainSet.getAllTrainSet().size();
+		sampleSize = trainSize;
 		diffCateNum = countNum.getDiffCateNum();
 	}
 

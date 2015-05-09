@@ -17,12 +17,20 @@ import jxl.write.biff.RowsExceededException;
  *
  */
 public class Predict {
+	/**
+	 * 
+	 */
 	private ArrayList<ArrayList<Double>> pOfWordInDifCate;// P(f|c)
+	/**
+	 * 
+	 */
 	private ArrayList<Double> pOfACate;// P(c)
 
 	MyLogger logger = new MyLogger("评论以及其特征的概率.txt");
-	MyLogger logger2 = new MyLogger("结果.txt");
 
+	/**
+	 * @param calculateP
+	 */
 	public Predict(CalculateP calculateP) {
 		pOfWordInDifCate = calculateP.getpOfWordInDifCate();
 		pOfACate = calculateP.getpOfACate();
@@ -118,6 +126,19 @@ public class Predict {
 		}
 	}
 
+	/**
+	 * 计算混淆矩阵
+	 * 
+	 * @param reviews
+	 *            被预测的评论集合
+	 * @param results
+	 *            预测出的评论结果
+	 * @param a
+	 *            标记的分类数组
+	 * @param b
+	 *            预测的分类数组
+	 * @return 混淆矩阵
+	 */
 	public int[][] genConfuMatrix(ArrayList<AnalReview> reviews,
 			ArrayList<Integer> results, int a[], int b[]) {// a实际分类（5）；b预测分类
 		int size = results.size();
@@ -139,7 +160,17 @@ public class Predict {
 		return ConfuMtr;
 	}
 
-	public void statisticalRate(int a[], int b[], int ConfuMtr[][]) {
+	/**
+	 * 根据混淆矩阵计算precision、accuracy、recall、F1等值
+	 * 
+	 * @param a
+	 *            标记的分类数组
+	 * @param b
+	 *            预测的分类数组
+	 * @param ConfuMtr
+	 *            混淆矩阵
+	 */
+	public double[] statisticalRate(int k, int a[], int b[], int ConfuMtr[][]) {
 		int n = a.length;
 		int n2 = b.length;// 预测分类个数
 		double[] precision = new double[n2];
@@ -151,6 +182,7 @@ public class Predict {
 		double precisionAvg = 0;
 		double recallAvg = 0;
 		double f1Avg = 0;
+		MyLogger logger2 = new MyLogger("结果"+k+".txt");
 
 		int[] correctNum = new int[n2];
 		int[] sumPre = new int[n2];
@@ -178,10 +210,10 @@ public class Predict {
 					+ "\r\n");
 			correctSum += correctNum[i];
 
-			double weight=pOfACate.get(i);//第i个类别的权重
-			precisionAvg += precision[i]*weight;
-			recallAvg += recall[i]*weight;
-			f1Avg += f1[i]*weight;
+			double weight = pOfACate.get(i);// 第i个类别的权重
+			precisionAvg += precision[i] * weight;
+			recallAvg += recall[i] * weight;
+			f1Avg += f1[i] * weight;
 		}
 		logger2.info("\r\n");
 		logger2.info(precisionAvg + "\t" + recallAvg + "\t" + f1Avg);
@@ -193,5 +225,12 @@ public class Predict {
 		logger2.info("\r\n");
 		logger2.info("\r\n");
 		logger2.info("\r\n");
+		
+		double prfa[]=new double[4];
+		prfa[0]=precisionAvg;
+		prfa[1]=recallAvg;
+		prfa[2]=f1Avg;
+		prfa[3]=accuracy;
+		return prfa;
 	}
 }

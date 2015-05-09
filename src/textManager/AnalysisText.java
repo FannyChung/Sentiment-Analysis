@@ -147,7 +147,7 @@ public class AnalysisText {
 	 * 初始化分词工具
 	 */
 	public void initNlpri() {
-		String argu = "C:/Users/hp/Desktop/ICTCLAS2015/sample/JnaTest_NLPIR/";
+		String argu = "./";
 		// String system_charset = "GBK";//GBK----0
 		int init_flag = CLibrary.Instance.NLPIR_Init(argu, 1, "0");
 

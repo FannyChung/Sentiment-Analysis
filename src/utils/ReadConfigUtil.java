@@ -7,6 +7,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
+/**
+ * 分词工具配置
+ * 
+ * NLPIR自带
+ */
 public class ReadConfigUtil {
 	private static Properties config = null;
 	static {
@@ -24,11 +29,11 @@ public class ReadConfigUtil {
 		}
 		config = new Properties();
 		try {
-			if(in==null){
+			if (in == null) {
 				System.out.println("config file not found nlpir.properties!");
-			}else {
+			} else {
 				config.load(in);
-				in.close();				
+				in.close();
 			}
 		} catch (IOException e) {
 			System.out.println("No nlpir.properties defined error");

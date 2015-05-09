@@ -27,6 +27,9 @@ public class TrainSet {
 	private ArrayList<AnalReview> testSet = new ArrayList<AnalReview>();// 测试集
 	private ArrayList<ArrayList<AnalReview>> diffCateTrainSet;// 不同类别的训练集
 	private ArrayList<AnalReview> allTrainSet;
+	private ArrayList<ArrayList<AnalReview>> kLists;//将所有数据集分为k个部分
+
+	
 
 	/**
 	 * 生成一个随机序列
@@ -72,7 +75,22 @@ public class TrainSet {
 		}
 		return tmpAnalReviews;
 	}
-
+	
+	
+	public void seleTrain(int k,int b[],ArrayList<AnalReview> reviews){
+		kLists=new ArrayList<ArrayList<AnalReview>>(k);
+		int numOfEach=reviews.size()/k;
+		reviews = genRandAnalReviews(reviews);// 打乱评论的顺序
+		int revCount=0;
+		for (int i = 0; i < k; i++) {
+			ArrayList<AnalReview> tmp=new ArrayList<AnalReview>(numOfEach);
+			for (int j = 0; j < numOfEach; j++) {
+				tmp.add(reviews.get(revCount));
+				revCount++;
+			}
+			kLists.add(tmp);
+		}
+	}
 	/**
 	 * 按百分比随机选择训练集
 	 * 
@@ -185,5 +203,19 @@ public class TrainSet {
 	 */
 	public ArrayList<AnalReview> getAllTrainSet() {
 		return allTrainSet;
+	}
+	
+	/**
+	 * @return the kLists
+	 */
+	public ArrayList<ArrayList<AnalReview>> getkLists() {
+		return kLists;
+	}
+
+	/**
+	 * @param kLists the kLists to set
+	 */
+	public void setkLists(ArrayList<ArrayList<AnalReview>> kLists) {
+		this.kLists = kLists;
 	}
 }

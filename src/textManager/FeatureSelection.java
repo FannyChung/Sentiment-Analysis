@@ -26,20 +26,21 @@ import jxl.write.biff.RowsExceededException;
  *
  */
 public class FeatureSelection {
-	private List<Map.Entry<String, Integer>> features;
+	private List<Map.Entry<String, Integer>> featuresFreq;
+	private ArrayList<String> featureStrings;
 
 	public ArrayList<String> IGSelection(ArrayList<String> features,
 			int afterSize, CountNum countNum) {
 		ArrayList<Integer> featureCount = countNum.getFeatureCount();// 该特征在所有文档中的出现次数
 		ArrayList<Integer> cateCount = countNum.getDiffCateNum();// 不同类别的文本个数
 		ArrayList<ArrayList<Integer>> countOfWordsDifCate = countNum
-				.getCountOfWordsDifCate();//不同类别下不同特征的出现次数
+				.getCountOfWordsDifCate();// 不同类别下不同特征的出现次数
 		int totalSize = countNum.getTotalSize();
 
 		int beforeSize = features.size();
 		Map<String, Double> featureIG = new HashMap<String, Double>(beforeSize);// 不同特征的IG值
 
-		for (int i = 0; i < features.size(); i++) { 	
+		for (int i = 0; i < features.size(); i++) {
 			double Hcf = 0;
 			double sum = 0;
 			int Nf = featureCount.get(i);
@@ -52,7 +53,7 @@ public class FeatureSelection {
 					if (k == 1)
 						Ncf = cateCount.get(j) - Ncf;// Nc,_f
 					double Pcf = (double) Ncf / Nf;
-					sum += Pcf * (Math.log(Pcf + Double.MIN_VALUE));//避免出现log(0)
+					sum += Pcf * (Math.log(Pcf + Double.MIN_VALUE));// 避免出现log(0)
 				}
 				Hcf += Pf * sum;
 			}
@@ -87,15 +88,30 @@ public class FeatureSelection {
 		return afterFeatures;
 	}
 
+	public void removeStopWords(ArrayList<String> stopWords) {// 前20%高频词
+																// &&在停用词表里
+		int firstSize = (int) (featureStrings.size() * 0.2);
+		int totalSize = featureStrings.size();
+		MyLogger logger = new MyLogger("删除停用词.txt");
+		for (int i = totalSize - 1, c = 0; c < firstSize; c++,i--) {
+			if (stopWords.contains(featureStrings.get(i))) {
+				logger.info(featuresFreq.get(i).toString() + "\r\n");
+
+				featuresFreq.remove(i);
+				featureStrings.remove(i);
+			}
+		}
+	}
+
 	/**
 	 * 按词出现的词数把词进行排序
 	 * 
 	 * @param frequecy
 	 */
 	public void sortByFreq(Map<String, Integer> frequecy) {
-		features = new ArrayList<Map.Entry<String, Integer>>(
+		featuresFreq = new ArrayList<Map.Entry<String, Integer>>(
 				frequecy.entrySet());
-		Collections.sort(features,
+		Collections.sort(featuresFreq,
 				new Comparator<Map.Entry<String, Integer>>() {
 					@Override
 					public int compare(
@@ -105,7 +121,25 @@ public class FeatureSelection {
 								- secondMapEntry.getValue();
 					}
 				});
-		System.out.println("after sort\t" + features.toString());
+		System.out.println("after sort\t" + featuresFreq.toString());
+
+		featureStrings = new ArrayList<String>(featuresFreq.size());
+		for (int i = 0; i < featuresFreq.size(); i++) {
+			featureStrings.add(featuresFreq.get(i).getKey());
+		}
+	}
+	
+	public void removeByDF(ArrayList<Integer> featureCount,int minDF) {//删除文档频率太小的词
+		MyLogger logger = new MyLogger("删除DF.txt");
+		int removeCount=0;
+		for (int i = 0; i < featureCount.size(); i++) {
+			if(featureCount.get(i)<=minDF){
+				logger.info(featuresFreq.get(i-removeCount).toString() + "\r\n");
+				featuresFreq.remove(i-removeCount);
+				featureStrings.remove(i-removeCount);
+				removeCount++;
+			}
+		}
 	}
 
 	/**
@@ -116,9 +150,10 @@ public class FeatureSelection {
 	public void delTopK(int k) {
 		MyLogger logger = new MyLogger("删除高频词.txt");
 		for (int i = 0; i < k; i++) {
-			int last = features.size() - 1;
-			logger.info(features.get(last).toString()+"\r\n");
-			features.remove(last);
+			int last = featuresFreq.size() - 1;
+			logger.info(featuresFreq.get(last).toString() + "\r\n");
+			featuresFreq.remove(last);
+			featureStrings.remove(last);
 		}
 	}
 
@@ -131,9 +166,10 @@ public class FeatureSelection {
 	public void delLessThan(int num) {
 		int i = 0;
 		MyLogger logger = new MyLogger("删除很少出现的词.txt");
-		while (features.get(i).getValue() <= num) {
-			logger.info(features.get(i).toString()+"\r\n");
-			features.remove(i);
+		while (featuresFreq.get(i).getValue() <= num) {
+			logger.info(featuresFreq.get(i).toString() + "\r\n");
+			featuresFreq.remove(i);
+			featureStrings.remove(i);
 		}
 	}
 
@@ -141,8 +177,8 @@ public class FeatureSelection {
 			WriteException {
 		Label label;
 		int k = 0;
-		for (int i = 0; i < features.size(); i++) {
-			Entry<String, Integer> entry = features.get(i);
+		for (int i = 0; i < featuresFreq.size(); i++) {
+			Entry<String, Integer> entry = featuresFreq.get(i);
 			String string = entry.getKey();
 			Integer sfre = entry.getValue();
 			label = new Label(0, k, string);
@@ -151,20 +187,15 @@ public class FeatureSelection {
 			sheet.addCell(label);
 			k++;
 		}
-		System.out.println(features);
-		System.out.println("del后总词数：" + k);
+		System.out.println(featuresFreq);
 	}
 
-	public List<Map.Entry<String, Integer>> getFeatures() {
-		return features;
+	public List<Map.Entry<String, Integer>> getFeaturesFreq() {
+		return featuresFreq;
 	}
 
 	public ArrayList<String> getFeatureString() {
-		ArrayList<String> arrayList = new ArrayList<String>(features.size());
-		for (int i = 0; i < features.size(); i++) {
-			arrayList.add(features.get(i).getKey());
-		}
-		return arrayList;
+		return featureStrings;
 	}
 
 	/**
@@ -172,6 +203,6 @@ public class FeatureSelection {
 	 *            the features to set
 	 */
 	public void setFeatures(List<Map.Entry<String, Integer>> features) {
-		this.features = features;
+		this.featuresFreq = features;
 	}
 }

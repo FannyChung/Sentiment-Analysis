@@ -24,6 +24,7 @@ import jxl.write.biff.RowsExceededException;
 public class CountNum {
 	private ArrayList<ArrayList<AnalReview>> diffCateDataSet;// 不同类别的训练集
 	private ArrayList<Integer> diffCateNum;// 不同类别的文本个数
+
 	private ArrayList<Integer> featureCount;// 该特征在所有文档中的出现次数
 	private ArrayList<ArrayList<Integer>> countOfWordsDifCate;// 词在不同类别中的计数
 	private int totalSize;
@@ -32,12 +33,12 @@ public class CountNum {
 	MyLogger logger2 = new MyLogger("不同特征的文本个数.txt");
 
 	/**
-	 * 将所有类别的评论按星级分类
+	 * 将所有类别的评论按星级分类，统计不同类别的文档数
 	 * 
 	 * @param reviews
 	 * @param reviewLevels
 	 */
-	public void splitReviewsByLev(ArrayList<AnalReview> reviews,
+	public void separateReviewsByLevel(ArrayList<AnalReview> reviews,
 			int reviewLevels[]) {// 注意这个数组，
 		totalSize = reviews.size();
 		int cateNum = reviewLevels.length;
@@ -75,10 +76,9 @@ public class CountNum {
 			ArrayList<AnalReview> reviewsOfACate) {
 		int n = 0;
 		for (AnalReview analReview : reviewsOfACate) {
-			n += (analReview.getFrequency().getOrDefault(feature, 0));
-			// if (analReview.getFrequency().containsKey(feature))//
-			// 该文档出现了该词，则该类别的特征出现文档数+1
-			// n++;
+//			n += (analReview.getFrequency().getOrDefault(feature, 0));//该文档出现了该词，则+在该词在文档的词频;否则+0
+			if (analReview.getFrequency().containsKey(feature))// 该文档出现了该词，则该类别的特征出现文档数+1
+				n++;
 		}
 		return n;
 	}
@@ -101,6 +101,7 @@ public class CountNum {
 			}
 			countOfWordsDifCate.add(wordOfAcate);
 		}
+		//统计所有特征出现的总次数
 		int f = countOfWordsDifCate.get(0).size();// 特征数
 		featureCount = new ArrayList<Integer>(f);
 		for (int i = 0; i < f; i++) {
@@ -111,7 +112,6 @@ public class CountNum {
 			logger2.info(features.get(i) + "\t" + sum + "\r\n");
 			featureCount.add(sum);
 		}
-		// logger2.info("\r\n");
 	}
 
 	/**
@@ -192,7 +192,7 @@ public class CountNum {
 		System.out.println("charSum" + charSum);
 		System.out.println("aveWords" + (double) wordSum / i);
 		System.out.println("aveChars" + (double) charSum / i);
-//		System.out.println(frequency);
+		// System.out.println(frequency);
 	}
 
 	/**
@@ -220,9 +220,8 @@ public class CountNum {
 			sheet.addCell(label);
 			k++;
 		}
-		System.out.println("删除前总词数：" + k);
 	}
-	
+
 	/**
 	 * @return the featureCount 不同特征出现的文档个数
 	 */
@@ -255,8 +254,6 @@ public class CountNum {
 		return result;
 	}
 
-
-
 	/**
 	 * @return the totalSize
 	 */
@@ -264,11 +261,10 @@ public class CountNum {
 		return totalSize;
 	}
 
-
 	public HashMap<String, Integer> getFrequency() {
 		return frequency;
 	}
-	
+
 	/**
 	 * @param totalSize
 	 *            the totalSize to set
