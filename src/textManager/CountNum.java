@@ -112,6 +112,7 @@ public class CountNum {
 			logger2.info(features.get(i) + "\t" + sum + "\r\n");
 			featureCount.add(sum);
 		}
+		logger2.info("-----------------------------------------------------------------------------\r\n");
 	}
 
 	/**

@@ -9,8 +9,10 @@ public class AnalReview {
 	 */
 	private String text;
 	private ArrayList<String> words;
+	private ArrayList<ArrayList<String>> wordOfSentence;//每句话里面的词
 
-	private String filtedText;
+	private String filtedText;//被过滤的句子
+	private boolean[] featureValue;//特征向量对应的值
 
 	/**
 	 * 评论星级
@@ -30,6 +32,8 @@ public class AnalReview {
 	 */
 	private HashMap<String, Integer> frequency = new HashMap<String, Integer>();
 
+	
+	
 	public AnalReview(String text, int level) {
 		this.text = text;
 		this.level = level;
@@ -90,10 +94,10 @@ public class AnalReview {
 
 	/**
 	 * @param filtedText
-	 *            the filtedText to set
+	 *            the filtedText to add
 	 */
-	public void setFiltedText(String filtedText) {
-		this.filtedText = filtedText;
+	public void addFiltedText(String filtedText) {
+		this.filtedText.concat(filtedText);
 	}
 
 	/**
@@ -109,6 +113,34 @@ public class AnalReview {
 	 */
 	public void setWords(ArrayList<String> words) {
 		this.words = words;
+	}
+
+	/**
+	 * @return the featureValue
+	 */
+	public boolean[] getFeatureValue() {
+		return featureValue;
+	}
+
+	/**
+	 * @param featureValue the featureValue to set
+	 */
+	public void setFeatureValue(boolean[] featureValue) {
+		this.featureValue = featureValue;
+	}
+
+	/**
+	 * @return the wordOfSentence
+	 */
+	public ArrayList<ArrayList<String>> getWordOfSentence() {
+		return wordOfSentence;
+	}
+
+	/**
+	 * @param wordOfSentence the wordOfSentence to set
+	 */
+	public void setWordOfSentence(ArrayList<ArrayList<String>> wordOfSentence) {
+		this.wordOfSentence = wordOfSentence;
 	}
 
 }

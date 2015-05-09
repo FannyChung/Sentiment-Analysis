@@ -37,9 +37,8 @@ import jxl.write.biff.RowsExceededException;
  */
 public class AnalysisText {
 
-
 	private ArrayList<AnalReview> reviews = new ArrayList<AnalReview>();
-
+	private ArrayList<String> allEmotionRelatedWords;
 	private String nativeBytes;
 	private final int GUESS_LEN = 50;
 
@@ -105,8 +104,8 @@ public class AnalysisText {
 	 * @param title
 	 *            评论标题
 	 */
-	public void analysis(String text, int level, String title) {
-		text += (" " + title);
+	private void analysis(String text, int level, String title) {
+		text += ("。 " + title);
 		AnalReview review = new AnalReview(text, level);
 		// 统计字数
 		int charsCount = 0;
@@ -114,14 +113,25 @@ public class AnalysisText {
 		// if(text.length()>GUESS_LEN)
 		// text=filtText(text,review);
 
+		boolean filtNeed = (text.length() > GUESS_LEN);
 		// 分词，并统计词数和词出现的词数
-		String[] analText = analText(review.getText());
+		ArrayList<ArrayList<String>> analText = analText(review.getText());
 		int wordsCount = 0;
-		for (String string : analText) {
-			review.getFrequency().merge(string, 1,
-					(value, newValue) -> addOne(value));
-			charsCount += string.length();// 统计字数
-			wordsCount++;// 统计词数
+		for (ArrayList<String> strings : analText) {// 所有句子
+
+			ArrayList<String> emotionIn=new ArrayList<String>();
+			emotionIn.addAll(strings);
+			emotionIn.retainAll(allEmotionRelatedWords);
+			if(emotionIn.isEmpty()){
+				review.addFiltedText(strings);
+			}
+			for (String string : strings) {// 所有词汇
+				review.getFrequency().merge(string, 1,
+						(value, newValue) -> addOne(value));
+				charsCount += string.length();// 统计字数
+				wordsCount++;// 统计词数
+			}
+
 		}
 		review.setWordsCount(wordsCount);
 		review.setCharsCount(charsCount);
@@ -137,7 +147,7 @@ public class AnalysisText {
 			System.out.println(review);
 			i++;
 		}
-		System.out.println(i);
+		System.out.println("总评论个数：" + i);
 		System.out.println();
 		System.out.println();
 		System.out.println();
@@ -161,23 +171,34 @@ public class AnalysisText {
 	/**
 	 * 利用分词器对一段文本分词
 	 * 
-	 * @param sInput
+	 * @param reivewText
 	 *            输入的文本
 	 * @return 分词后的单词的数组
 	 */
-	public String[] analText(String sInput) {
+	public ArrayList<ArrayList<String>> analText(String reivewText) {
 		try {
-			sInput = full2HalfChange(sInput);
+			reivewText = full2HalfChange(reivewText);
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
 		}
-		sInput = sInput.replaceAll("[^\u4e00-\u9fa5?!？！]+",// 只保留中英文数字和?! 0-9a-zA-Z
-				" ");// 去除特殊字符，保留感叹号和问号
-		sInput = sInput.replaceAll("\\s+", " ");
-		nativeBytes = CLibrary.Instance.NLPIR_ParagraphProcess(sInput, 0);
-		nativeBytes = nativeBytes.replaceAll("\\s+", " ");
-		String[] A = nativeBytes.split(" ");
-		return A;
+		ArrayList<ArrayList<String>> wordOfSen = new ArrayList<ArrayList<String>>();
+		String sentenceReg = "[。？！?.!]";
+		String[] substrs = reivewText.split(sentenceReg);
+		for (String string : substrs) {
+			string = string.replaceAll("[^\u4e00-\u9fa5?!？！]+",// 只保留中英文数字和?!
+																// 0-9a-zA-Z
+					" ");// 去除特殊字符，保留感叹号和问号
+			string = string.replaceAll("\\s+", " ");
+			nativeBytes = CLibrary.Instance.NLPIR_ParagraphProcess(string, 0);
+			nativeBytes = nativeBytes.replaceAll("\\s+", " ");
+			String[] subStW1 = nativeBytes.split(" ");
+			ArrayList<String> subStW=new ArrayList<String>();
+			for (String string2 : subStW1) {
+				subStW.add(string2);
+			}
+			wordOfSen.add(subStW);
+		}
+		return wordOfSen;
 	}
 
 	/**
