@@ -1,7 +1,8 @@
+package utils;
 /**
  * 
  */
-package utils;
+
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -9,8 +10,6 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.ArrayList;
-import java.util.Iterator;
 
 /**
  * 读取情感词典
@@ -23,13 +22,13 @@ public class LoadEmotionRelated {
 	private String fileName[] = { "正面情感词语（中文）.txt", "负面情感词语（中文）.txt",
 			"正面评价词语（中文）.txt", "负面评价词语（中文）.txt", "程度级别词语（中文）.txt",
 			"主张词语（中文）.txt" };
-	private ArrayList<String> emotionalWordsP = new ArrayList<String>();// 正面情感词
+	private ArrayList<String> emotionalWordsP = new ArrayList<String>();// 正面情感�?
 	private ArrayList<String> emotionalWordsN = new ArrayList<String>();
-	private ArrayList<String> evaluWordsP = new ArrayList<String>();// 正面评价词
+	private ArrayList<String> evaluWordsP = new ArrayList<String>();// 正面评价�?
 	private ArrayList<String> evaluWordsN = new ArrayList<String>();
-	private ArrayList<String> degreeWords = new ArrayList<String>();// 程度词
+	private ArrayList<String> degreeWords = new ArrayList<String>();// 程度�?
 	private ArrayList<Integer> degreeWordsGroupCount;
-	private ArrayList<String> viewWords = new ArrayList<String>();// 主张词
+	private ArrayList<String> viewWords = new ArrayList<String>();// 主张�?
 	private ArrayList<String> allEmotionRelated = new ArrayList<String>();
 
 	public LoadEmotionRelated() {
@@ -57,11 +56,11 @@ public class LoadEmotionRelated {
 				}
 				reader.close();
 			} catch (FileNotFoundException e) {
-				System.err.println("找不到文件" + fileName[i]);
+				System.err.println("找不到文�?" + fileName[i]);
 				e.printStackTrace();
 			} catch (IOException e) {
 				e.printStackTrace();
-				System.err.println("读文件" + fileName[i] + "错误");
+				System.err.println("读文�?" + fileName[i] + "错误");
 			}
 		}
 //		String[] tmp=(String[]) allEmotionRelated.toArray();

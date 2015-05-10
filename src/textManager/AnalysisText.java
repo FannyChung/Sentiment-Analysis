@@ -1,27 +1,12 @@
 package textManager;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map.Entry;
-
 import utils.AnalReview;
 import utils.NlpirTest.CLibrary;
 import jxl.Sheet;
-import jxl.Workbook;
-import jxl.read.biff.BiffException;
 import jxl.write.Label;
 import jxl.write.WritableSheet;
-import jxl.write.WritableWorkbook;
 import jxl.write.WriteException;
 import jxl.write.biff.RowsExceededException;
 
@@ -109,33 +94,43 @@ public class AnalysisText {
 		AnalReview review = new AnalReview(text, level);
 		// 统计字数
 		int charsCount = 0;
-		// TODO 先进行文本筛选，过滤客观句子
-		// if(text.length()>GUESS_LEN)
-		// text=filtText(text,review);
-
-		boolean filtNeed = (text.length() > GUESS_LEN);
-		// 分词，并统计词数和词出现的词数
-		ArrayList<ArrayList<String>> analText = analText(review.getText());
 		int wordsCount = 0;
-		for (ArrayList<String> strings : analText) {// 所有句子
+//		if (text.length() > GUESS_LEN)
+//			text = filt(text, allEmotionRelatedWords, review);
 
-			ArrayList<String> emotionIn=new ArrayList<String>();
-			emotionIn.addAll(strings);
-			emotionIn.retainAll(allEmotionRelatedWords);
-			if(emotionIn.isEmpty()){
-				review.addFiltedText(strings);
-			}
-			for (String string : strings) {// 所有词汇
-				review.getFrequency().merge(string, 1,
-						(value, newValue) -> addOne(value));
-				charsCount += string.length();// 统计字数
-				wordsCount++;// 统计词数
-			}
-
+		// 分词，并统计词数和词出现的词数
+		String[] analText = wordSeg(text);
+		for (String string : analText) {
+			review.getFrequency().merge(string, 1,
+					(value, newValue) -> addOne(value));
+			charsCount += string.length();// 统计字数
+			wordsCount++;// 统计词数
 		}
 		review.setWordsCount(wordsCount);
 		review.setCharsCount(charsCount);
 		reviews.add(review);
+	}
+
+	private String filt(String inString, ArrayList<String> emotionWords,
+			AnalReview review) {
+		String[] subStrings = inString.split("[。？！?.!]+");
+		String filtedString = "";
+		for (String string : subStrings) {// 每个句子
+			boolean emotionTag = false;
+			String[] words = wordSeg(string);
+			for (String word : words) {// 每个词
+				if (allEmotionRelatedWords.contains(word)) {
+					emotionTag = true;
+					break;
+				}
+			}
+			if (!emotionTag) {
+				filtedString = filtedString.concat(string);
+				inString = inString.replace(string, " ");
+			}
+		}
+		review.setFiltedText(filtedString);
+		return inString;
 	}
 
 	/**
@@ -175,30 +170,20 @@ public class AnalysisText {
 	 *            输入的文本
 	 * @return 分词后的单词的数组
 	 */
-	public ArrayList<ArrayList<String>> analText(String reivewText) {
+	public String[] wordSeg(String reivewText) {
 		try {
 			reivewText = full2HalfChange(reivewText);
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
 		}
-		ArrayList<ArrayList<String>> wordOfSen = new ArrayList<ArrayList<String>>();
-		String sentenceReg = "[。？！?.!]";
-		String[] substrs = reivewText.split(sentenceReg);
-		for (String string : substrs) {
-			string = string.replaceAll("[^\u4e00-\u9fa5?!？！]+",// 只保留中英文数字和?!
-																// 0-9a-zA-Z
-					" ");// 去除特殊字符，保留感叹号和问号
-			string = string.replaceAll("\\s+", " ");
-			nativeBytes = CLibrary.Instance.NLPIR_ParagraphProcess(string, 0);
-			nativeBytes = nativeBytes.replaceAll("\\s+", " ");
-			String[] subStW1 = nativeBytes.split(" ");
-			ArrayList<String> subStW=new ArrayList<String>();
-			for (String string2 : subStW1) {
-				subStW.add(string2);
-			}
-			wordOfSen.add(subStW);
-		}
-		return wordOfSen;
+		reivewText = reivewText.replaceAll("[^\u4e00-\u9fa5?!？！]+",// 只保留中英文数字和?!
+																	// 0-9a-zA-Z
+				" ");// 去除特殊字符，保留感叹号和问号
+		reivewText = reivewText.replaceAll("\\s+", " ");
+		nativeBytes = CLibrary.Instance.NLPIR_ParagraphProcess(reivewText, 0);
+		nativeBytes = nativeBytes.replaceAll("\\s+", " ");
+		String[] A = nativeBytes.split(" ");
+		return A;
 	}
 
 	/**
@@ -241,5 +226,14 @@ public class AnalysisText {
 
 	public ArrayList<AnalReview> getReviews() {
 		return reviews;
+	}
+
+	/**
+	 * @param allEmotionRelatedWords
+	 *            the allEmotionRelatedWords to set
+	 */
+	public void setAllEmotionRelatedWords(
+			ArrayList<String> allEmotionRelatedWords) {
+		this.allEmotionRelatedWords = allEmotionRelatedWords;
 	}
 }

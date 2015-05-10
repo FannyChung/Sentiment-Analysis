@@ -5,20 +5,14 @@ package textManager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 
 import utils.AnalReview;
-import jxl.write.Label;
-import jxl.write.WritableSheet;
-import jxl.write.WriteException;
-import jxl.write.biff.RowsExceededException;
 
 /**
- * 分离训练集和测试集
+ * 分离训练集和测试集,并向量化
  * 
  * @author hp
  *
@@ -30,6 +24,21 @@ public class TrainSet {
 	private ArrayList<ArrayList<AnalReview>> kLists;//将所有数据集分为k个部分
 
 	
+	public void genFeatureVectors(ArrayList<AnalReview> reviews,ArrayList<String> features) {
+		for (AnalReview analReview : reviews) {
+			boolean[] feVec=new boolean[features.size()];
+			HashMap<String, Integer> freTemp=analReview.getFrequency();
+			for (int i = 0; i < feVec.length; i++) {
+				String feature=features.get(i);
+				if(freTemp.containsKey(feature)){
+					feVec[i]=true;
+				}else {
+					feVec[i]=(false);
+				}
+			}
+			analReview.setFeatureVector(feVec);
+		}
+	}
 
 	/**
 	 * 生成一个随机序列

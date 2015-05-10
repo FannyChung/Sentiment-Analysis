@@ -12,7 +12,7 @@ public class AnalReview {
 	private ArrayList<ArrayList<String>> wordOfSentence;//每句话里面的词
 
 	private String filtedText;//被过滤的句子
-	private boolean[] featureValue;//特征向量对应的值
+	private boolean[] featureVector;//特征向量对应的值
 
 	/**
 	 * 评论星级
@@ -118,15 +118,15 @@ public class AnalReview {
 	/**
 	 * @return the featureValue
 	 */
-	public boolean[] getFeatureValue() {
-		return featureValue;
+	public boolean[] getFeatureVector() {
+		return featureVector;
 	}
 
 	/**
 	 * @param featureValue the featureValue to set
 	 */
-	public void setFeatureValue(boolean[] featureValue) {
-		this.featureValue = featureValue;
+	public void setFeatureVector(boolean[] featureValue) {
+		this.featureVector = featureValue;
 	}
 
 	/**
@@ -141,6 +141,13 @@ public class AnalReview {
 	 */
 	public void setWordOfSentence(ArrayList<ArrayList<String>> wordOfSentence) {
 		this.wordOfSentence = wordOfSentence;
+	}
+
+	/**
+	 * @param filtedText the filtedText to set
+	 */
+	public void setFiltedText(String filtedText) {
+		this.filtedText = filtedText;
 	}
 
 }

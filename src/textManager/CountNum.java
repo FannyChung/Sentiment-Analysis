@@ -4,6 +4,9 @@
 package textManager;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -28,7 +31,7 @@ public class CountNum {
 	private ArrayList<Integer> featureCount;// 该特征在所有文档中的出现次数
 	private ArrayList<ArrayList<Integer>> countOfWordsDifCate;// 词在不同类别中的计数
 	private int totalSize;
-	private HashMap<String, Integer> frequency = new HashMap<String, Integer>();
+	private HashMap<String, Integer> frequency;
 	MyLogger logger1 = new MyLogger("不同类别的文本个数.txt");
 	MyLogger logger2 = new MyLogger("不同特征的文本个数.txt");
 
@@ -72,11 +75,12 @@ public class CountNum {
 	 *            给定的同一个类别的评论集合
 	 * @return
 	 */
-	private int calcNumOfWordInCate(String feature,
+	private int calcNumOfWordACate(String feature,
 			ArrayList<AnalReview> reviewsOfACate) {
 		int n = 0;
 		for (AnalReview analReview : reviewsOfACate) {
-//			n += (analReview.getFrequency().getOrDefault(feature, 0));//该文档出现了该词，则+在该词在文档的词频;否则+0
+			// n += (analReview.getFrequency().getOrDefault(feature,
+			// 0));//该文档出现了该词，则+在该词在文档的词频;否则+0
 			if (analReview.getFrequency().containsKey(feature))// 该文档出现了该词，则该类别的特征出现文档数+1
 				n++;
 		}
@@ -96,12 +100,12 @@ public class CountNum {
 			ArrayList<Integer> wordOfAcate = new ArrayList<Integer>(
 					features.size());// 一个类别的特征出现的文档个数
 			for (String string : features) {
-				int count = calcNumOfWordInCate(string, arrayList);
+				int count = calcNumOfWordACate(string, arrayList);
 				wordOfAcate.add(count);
 			}
 			countOfWordsDifCate.add(wordOfAcate);
 		}
-		//统计所有特征出现的总次数
+		// 统计所有特征出现的总次数
 		int f = countOfWordsDifCate.get(0).size();// 特征数
 		featureCount = new ArrayList<Integer>(f);
 		for (int i = 0; i < f; i++) {
@@ -113,6 +117,39 @@ public class CountNum {
 			featureCount.add(sum);
 		}
 		logger2.info("-----------------------------------------------------------------------------\r\n");
+	}
+
+	public void countFeatureInCates() {
+		int cateNum = diffCateDataSet.size();// 类别数
+		int featNum=diffCateDataSet.get(0).get(0).getFeatureVector().length;
+		featureCount=new ArrayList<Integer>(featNum);
+		countOfWordsDifCate = new ArrayList<ArrayList<Integer>>(cateNum);
+		for (int i = 0; i < cateNum; i++) {
+			ArrayList<Integer> countOfWordsAcate=new ArrayList<Integer>(featNum);
+			for (int j = 0; j < featNum; j++) {
+				countOfWordsAcate.add(0);
+			}
+			countOfWordsDifCate.add(countOfWordsAcate);
+		}
+		for (int i = 0; i < featNum; i++) {
+			featureCount.add(0);
+		}
+		int cateIndex=0;
+		for (ArrayList<AnalReview> reviews : diffCateDataSet) {//同一类别的评论集合
+			for (AnalReview analReview : reviews) {//每个评论
+				boolean[] feVec=analReview.getFeatureVector();
+				for (int featureIndex = 0; featureIndex < featNum; featureIndex++) {
+					boolean b = feVec[featureIndex];
+					if(b){
+						int bef=countOfWordsDifCate.get(cateIndex).get(featureIndex);
+						countOfWordsDifCate.get(cateIndex).set(featureIndex, bef+1);
+						bef=featureCount.get(featureIndex);
+						featureCount.set(featureIndex, bef+1);
+					}
+				}
+			}
+			cateIndex++;
+		}
 	}
 
 	/**
@@ -172,6 +209,7 @@ public class CountNum {
 		int i = 0;
 		int wordSum = 0;
 		int charSum = 0;
+		frequency = new HashMap<String, Integer>();
 		for (AnalReview analReview : reviews) {
 			i++;
 			wordSum += analReview.getWordsCount();// 统计总的词数

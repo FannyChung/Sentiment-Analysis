@@ -12,7 +12,7 @@ public class NlpirTest {
 		// 定义并初始化接口的静态变量
 		CLibrary Instance = (CLibrary) Native
 				.loadLibrary(
-						"C:/Users/hp/Desktop/ICTCLAS2015/sample/JnaTest_NLPIR/lib/NLPIR.dll",
+						"./lib/NLPIR.dll",
 						CLibrary.class);
 
 		public int NLPIR_Init(String sDataPath, int encoding,

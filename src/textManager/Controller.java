@@ -6,13 +6,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Random;
-import java.util.Set;
 
 import utils.AnalReview;
 import utils.LoadEmotionRelated;
@@ -78,6 +71,8 @@ public class Controller {
 	 */
 	public void wordSegmentation() {
 		textAnal.initNlpri();
+		textAnal.setAllEmotionRelatedWords(loadEmotionRelated
+				.getAllEmotionRelated());
 		try {
 			WritableSheet sheet;
 			// 读表格中的信息
@@ -108,10 +103,10 @@ public class Controller {
 
 		featureSelection = new FeatureSelection();
 		featureSelection.sortByFreq(countNum.getFrequency());
-//		featureSelection.delLessThan(3);// 删除出现低于3次的词
+		// featureSelection.delLessThan(3);// 删除出现低于3次的词
 		// featureSelection.delTopK(20);
 		features = featureSelection.getFeatureString();
-		System.out.println("featureSize " + features.size());
+		System.out.println("initial featureSize: " + features.size());
 
 		// 删除停用词
 		loadEmotionRelated.regenWordLists(features);
@@ -120,16 +115,17 @@ public class Controller {
 		featureSelection.removeStopWords(loadStopWords.getStopWords());
 		System.out.println("after StopWords: featureSize " + features.size());
 
-		sheet = book.createSheet("第一次特征筛选后", sheetNum++);
+		// sheet = book.createSheet("第一次特征筛选后", sheetNum++);
 		try {
-			featureSelection.writeFeature(sheet);
+			// featureSelection.writeFeature(sheet);
 
-			
 			countNum.separateReviewsByLevel(textAnal.getReviews(), a);
 			countNum.countFeatureInCates(features);
-			
+
+			// 文档频率过滤
 			featureSelection.removeByDF(countNum.getFeatureCount(), 3);
-			System.out.println("after DF: featureSize " + featureSelection.getFeatureString().size());
+			System.out.println("after DF: featureSize "
+					+ featureSelection.getFeatureString().size());
 			// 信息增益过滤
 			features = featureSelection.IGSelection(features, 2000, countNum);
 			System.out.println("after IG: featureSize " + features.size());
@@ -141,8 +137,7 @@ public class Controller {
 			e.printStackTrace();
 		}
 
-		// TODO 向量化，为每个review添加向量，boolean
-
+		trainSet.genFeatureVectors(textAnal.getReviews(), features);
 	}
 
 	/**
@@ -156,7 +151,8 @@ public class Controller {
 
 	public void training(ArrayList<AnalReview> trainData) {
 		countNum.separateReviewsByLevel(trainData, a);
-		countNum.countFeatureInCates(features);
+		// countNum.countFeatureInCates(features);
+		countNum.countFeatureInCates();//向量化后的计数
 
 		calculateP = new CalculateP(trainData.size(), countNum);
 		calculateP.calcPc();
@@ -166,8 +162,9 @@ public class Controller {
 	public double[] predict(int k, ArrayList<AnalReview> testData) {
 		Predict predict = new Predict(calculateP);
 		WritableSheet sheet;
-		ArrayList<Integer> results = predict.predictRevs(testData, features);
-		;
+//		ArrayList<Integer> results = predict.predictRevs(testData, features);
+		ArrayList<Integer> results = predict.predictRevs(testData);//向量化后
+		
 		try {
 			sheet = book.createSheet("预测_测试集" + k, sheetNum++);
 			predict.writePredResult(testData, sheet, results, a);
@@ -182,7 +179,7 @@ public class Controller {
 	}
 
 	public static void main(String[] args) {
-		long a=System.currentTimeMillis();
+		long a = System.currentTimeMillis();
 		Controller controller = new Controller();
 		controller.openExcel();
 
@@ -216,6 +213,7 @@ public class Controller {
 				+ "\t" + sumAccu / k);
 
 		controller.closeExcel();
-		System.out.println("\r执行耗时 : "+(System.currentTimeMillis()-a)+" ms ");
+		System.out.println("\r执行耗时 : " + (System.currentTimeMillis() - a)
+				+ " ms ");
 	}
 }

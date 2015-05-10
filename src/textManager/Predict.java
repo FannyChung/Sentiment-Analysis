@@ -73,6 +73,32 @@ public class Predict {
 		return resultIndex;
 	}
 
+	private int predict(AnalReview review) {
+		int resultIndex = 0;
+		int c = pOfWordInDifCate.size();// 类别数
+		double finalP = -Double.MAX_VALUE;
+		for (int cateIndex = 0; cateIndex < c; cateIndex++) {
+			double p = Math.log(pOfACate.get(cateIndex));
+			boolean[] feVec = review.getFeatureVector();
+			for (int featureIndex = 0; featureIndex < feVec.length; featureIndex++) {
+				if (feVec[featureIndex]) {
+					p += Math.log(pOfWordInDifCate.get(cateIndex).get(
+							featureIndex));
+				} else {
+					p += Math.log(1 - pOfWordInDifCate.get(cateIndex).get(
+							featureIndex));
+				}
+			}
+			if (finalP < p) {
+				finalP = p;
+				resultIndex = cateIndex;
+			}
+			logger.info("ca" + cateIndex + "\t" + p + "\t");
+		}
+		logger.info("\r\n");
+		return resultIndex;
+	}
+
 	/**
 	 * 预测多个评论的结果
 	 * 
@@ -86,7 +112,15 @@ public class Predict {
 			ArrayList<String> features) {
 		ArrayList<Integer> results = new ArrayList<Integer>();
 		for (AnalReview analReview : reviews) {
-			results.add(predict(analReview, features));
+			 results.add(predict(analReview, features));
+		}
+		return results;
+	}
+
+	public ArrayList<Integer> predictRevs(ArrayList<AnalReview> reviews) {
+		ArrayList<Integer> results = new ArrayList<Integer>();
+		for (AnalReview analReview : reviews) {
+			results.add(predict(analReview));// 向量化后的预测方法
 		}
 		return results;
 	}
@@ -182,7 +216,7 @@ public class Predict {
 		double precisionAvg = 0;
 		double recallAvg = 0;
 		double f1Avg = 0;
-		MyLogger logger2 = new MyLogger("结果"+k+".txt");
+		MyLogger logger2 = new MyLogger("结果" + k + ".txt");
 
 		int[] correctNum = new int[n2];
 		int[] sumPre = new int[n2];
@@ -225,12 +259,12 @@ public class Predict {
 		logger2.info("\r\n");
 		logger2.info("\r\n");
 		logger2.info("\r\n");
-		
-		double prfa[]=new double[4];
-		prfa[0]=precisionAvg;
-		prfa[1]=recallAvg;
-		prfa[2]=f1Avg;
-		prfa[3]=accuracy;
+
+		double prfa[] = new double[4];
+		prfa[0] = precisionAvg;
+		prfa[1] = recallAvg;
+		prfa[2] = f1Avg;
+		prfa[3] = accuracy;
 		return prfa;
 	}
 }

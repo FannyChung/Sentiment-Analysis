@@ -7,12 +7,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.logging.Logger;
-
 import utils.MyLogger;
 import jxl.write.Label;
 import jxl.write.WritableSheet;
@@ -121,7 +118,6 @@ public class FeatureSelection {
 								- secondMapEntry.getValue();
 					}
 				});
-		System.out.println("after sort\t" + featuresFreq.toString());
 
 		featureStrings = new ArrayList<String>(featuresFreq.size());
 		for (int i = 0; i < featuresFreq.size(); i++) {
