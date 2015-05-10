@@ -115,8 +115,8 @@ public class Controller {
 		featureSelection.removeStopWords(loadStopWords.getStopWords());
 		System.out.println("after StopWords: featureSize " + features.size());
 
-		// sheet = book.createSheet("第一次特征筛选后", sheetNum++);
 		try {
+			// sheet = book.createSheet("停用词筛选后", sheetNum++);
 			// featureSelection.writeFeature(sheet);
 
 			countNum.separateReviewsByLevel(textAnal.getReviews(), a);
@@ -136,8 +136,7 @@ public class Controller {
 		} catch (WriteException e) {
 			e.printStackTrace();
 		}
-
-		trainSet.genFeatureVectors(textAnal.getReviews(), features);
+		trainSet.genFeatureVectors(textAnal.getReviews(), features);//向量化，为评论生成特征向量
 	}
 
 	/**
@@ -187,7 +186,9 @@ public class Controller {
 		controller.featureSel();
 
 		int k = 5;
-		controller.seleTrainSet(k);
+		controller.seleTrainSet(k);//使用K折交叉
+
+		//要统计的四个指标
 		double sumPre = 0;
 		double sumRecal = 0;
 		double sumF1 = 0;
@@ -208,6 +209,7 @@ public class Controller {
 			sumF1 += prfa[2];
 			sumAccu += prfa[3];
 		}
+		//输出平均指标
 		System.out.println("precision\t\trecall\t\tF1\t\taccuracy");
 		System.out.println(sumPre / k + "\t" + sumRecal / k + "\t" + sumF1 / k
 				+ "\t" + sumAccu / k);

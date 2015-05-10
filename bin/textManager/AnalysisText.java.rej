@@ -1,0 +1,33 @@
+diff a/src/textManager/AnalysisText.java b/src/textManager/AnalysisText.java	(rejected hunks)
+@@ -113,14 +113,25 @@
+ 		// if(text.length()>GUESS_LEN)
+ 		// text=filtText(text,review);
+ 
++		boolean filtNeed = (text.length() > GUESS_LEN);
+ 		// 分词，并统计词数和词出现的词数
+-		String[] analText = analText(review.getText());
++		ArrayList<ArrayList<String>> analText = analText(review.getText());
+ 		int wordsCount = 0;
+-		for (String string : analText) {
+-			review.getFrequency().merge(string, 1,
+-					(value, newValue) -> addOne(value));
+-			charsCount += string.length();// 统计字数
+-			wordsCount++;// 统计词数
++		for (ArrayList<String> strings : analText) {// 所有句子
++
++			ArrayList<String> emotionIn=new ArrayList<String>();
++			emotionIn.addAll(strings);
++			emotionIn.retainAll(allEmotionRelatedWords);
++			if(emotionIn.isEmpty()){
++				review.addFiltedText(strings);
++			}
++			for (String string : strings) {// 所有词汇
++				review.getFrequency().merge(string, 1,
++						(value, newValue) -> addOne(value));
++				charsCount += string.length();// 统计字数
++				wordsCount++;// 统计词数
++			}
++
+ 		}
+ 		review.setWordsCount(wordsCount);
+ 		review.setCharsCount(charsCount);
