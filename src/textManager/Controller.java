@@ -24,7 +24,7 @@ public class Controller {
 	private CalculateP calculateP;
 	private CountNum countNum;
 	private int a[] = { 1, 2, 3, 4, 5 };
-	private int b[] = { 1, 3, 5 };
+	private int b[][] = { { 1}, {2 , 3,4}, {  5 } };// { { 1 }, { 2 }, { 3 }, { 4 }, { 5 } }  { { 1, 2 }, { 3}, { 4, 5 } }
 	private ArrayList<String> features;
 	private LoadEmotionRelated loadEmotionRelated = new LoadEmotionRelated();
 	private LoadStopWords loadStopWords = new LoadStopWords();
@@ -119,7 +119,7 @@ public class Controller {
 		try {
 			// featureSelection.writeFeature(sheet);
 
-			countNum.separateReviewsByLevel(textAnal.getReviews(), a);
+			countNum.separateReviewsByLevel(textAnal.getReviews(), b);
 			countNum.countFeatureInCates(features);
 
 			// 文档频率过滤
@@ -146,13 +146,13 @@ public class Controller {
 	public void seleTrainSet(int k) {
 		// trainSet.seleTrain(a, 300, textAnal.getReviews());
 		// trainSet.seleTrain(a, 0.8, textAnal.getReviews());
-		trainSet.seleTrain(k, a, textAnal.getReviews());
+		trainSet.seleTrain(k, textAnal.getReviews());
 	}
 
 	public void training(ArrayList<AnalReview> trainData) {
-		countNum.separateReviewsByLevel(trainData, a);
+		countNum.separateReviewsByLevel(trainData, b);
 		// countNum.countFeatureInCates(features);
-		countNum.countFeatureInCates();//向量化后的计数
+		countNum.countFeatureInCates();// 向量化后的计数
 
 		calculateP = new CalculateP(trainData.size(), countNum);
 		calculateP.calcPc();
@@ -162,19 +162,19 @@ public class Controller {
 	public double[] predict(int k, ArrayList<AnalReview> testData) {
 		Predict predict = new Predict(calculateP);
 		WritableSheet sheet;
-//		ArrayList<Integer> results = predict.predictRevs(testData, features);
-		ArrayList<Integer> results = predict.predictRevs(testData);//向量化后
-		
+		// ArrayList<Integer> results = predict.predictRevs(testData, features);
+		ArrayList<Integer> results = predict.predictRevs(testData);// 向量化后
+
 		try {
 			sheet = book.createSheet("预测_测试集" + k, sheetNum++);
-			predict.writePredResult(testData, sheet, results, a);
+			predict.writePredResult(testData, sheet, results, b);
 		} catch (RowsExceededException e) {
 			e.printStackTrace();
 		} catch (WriteException e) {
 			e.printStackTrace();
 		}
-		double[] prfa = predict.statisticalRate(k, a, a,
-				predict.genConfuMatrix(testData, results, a, a));
+		double[] prfa = predict.statisticalRate(k, a, b,
+				predict.genConfuMatrix(testData, results, a, b));
 		return prfa;
 	}
 
@@ -209,11 +209,10 @@ public class Controller {
 			sumAccu += prfa[3];
 		}
 		System.out.println("precision\t\trecall\t\tF1\t\taccuracy");
-		System.out.println(sumPre / k + "\t" + sumRecal / k + "\t" + sumF1 / k
-				+ "\t" + sumAccu / k);
+		System.out.print(sumPre / k + "\t" + sumRecal / k + "\t" + sumF1 / k
+				+ "\t" + sumAccu / k + "\t");
 
 		controller.closeExcel();
-		System.out.println("\r执行耗时 : " + (System.currentTimeMillis() - a)
-				+ " ms ");
+		System.out.println((System.currentTimeMillis() - a) + " ms ");
 	}
 }

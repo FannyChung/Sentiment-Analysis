@@ -72,7 +72,7 @@ public class LoadEmotionRelated {
 //		viewWords = allEmotionRelated;
 	}
 
-	public void regenWordLists(ArrayList<String> features) {// 只保留特征词里面有的
+	public void regenWordLists(ArrayList<String> features) {// 只保留特征词里面有的情感词
 		allEmotionRelated.retainAll(features);
 	}
 

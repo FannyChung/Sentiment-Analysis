@@ -86,7 +86,7 @@ public class TrainSet {
 	}
 	
 	
-	public void seleTrain(int k,int b[],ArrayList<AnalReview> reviews){
+	public void seleTrain(int k,ArrayList<AnalReview> reviews){
 		kLists=new ArrayList<ArrayList<AnalReview>>(k);
 		int numOfEach=reviews.size()/k;
 		reviews = genRandAnalReviews(reviews);// 打乱评论的顺序

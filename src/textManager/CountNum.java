@@ -42,7 +42,7 @@ public class CountNum {
 	 * @param reviewLevels
 	 */
 	public void separateReviewsByLevel(ArrayList<AnalReview> reviews,
-			int reviewLevels[]) {// 注意这个数组，
+			int reviewLevels[][]) {// 注意这个数组，
 		totalSize = reviews.size();
 		int cateNum = reviewLevels.length;
 		diffCateDataSet = new ArrayList<ArrayList<AnalReview>>(cateNum);
@@ -52,9 +52,12 @@ public class CountNum {
 		for (AnalReview analReview : reviews) {
 			int level = analReview.getLevel();
 			for (int i = 0; i < reviewLevels.length; i++) {
-				if (reviewLevels[i] == level) {
-					diffCateDataSet.get(i).add(analReview);
+				for (int j = 0; j < reviewLevels[i].length; j++) {
+					if (reviewLevels[i][j] == level) {
+						diffCateDataSet.get(i).add(analReview);
+					}
 				}
+				
 			}
 		}
 		// 计算不同类别下的文档个数
@@ -121,11 +124,12 @@ public class CountNum {
 
 	public void countFeatureInCates() {
 		int cateNum = diffCateDataSet.size();// 类别数
-		int featNum=diffCateDataSet.get(0).get(0).getFeatureVector().length;
-		featureCount=new ArrayList<Integer>(featNum);
+		int featNum = diffCateDataSet.get(0).get(0).getFeatureVector().length;
+		featureCount = new ArrayList<Integer>(featNum);
 		countOfWordsDifCate = new ArrayList<ArrayList<Integer>>(cateNum);
 		for (int i = 0; i < cateNum; i++) {
-			ArrayList<Integer> countOfWordsAcate=new ArrayList<Integer>(featNum);
+			ArrayList<Integer> countOfWordsAcate = new ArrayList<Integer>(
+					featNum);
 			for (int j = 0; j < featNum; j++) {
 				countOfWordsAcate.add(0);
 			}
@@ -134,17 +138,19 @@ public class CountNum {
 		for (int i = 0; i < featNum; i++) {
 			featureCount.add(0);
 		}
-		int cateIndex=0;
-		for (ArrayList<AnalReview> reviews : diffCateDataSet) {//同一类别的评论集合
-			for (AnalReview analReview : reviews) {//每个评论
-				boolean[] feVec=analReview.getFeatureVector();
+		int cateIndex = 0;
+		for (ArrayList<AnalReview> reviews : diffCateDataSet) {// 同一类别的评论集合
+			for (AnalReview analReview : reviews) {// 每个评论
+				boolean[] feVec = analReview.getFeatureVector();
 				for (int featureIndex = 0; featureIndex < featNum; featureIndex++) {
 					boolean b = feVec[featureIndex];
-					if(b){
-						int bef=countOfWordsDifCate.get(cateIndex).get(featureIndex);
-						countOfWordsDifCate.get(cateIndex).set(featureIndex, bef+1);
-						bef=featureCount.get(featureIndex);
-						featureCount.set(featureIndex, bef+1);
+					if (b) {
+						int bef = countOfWordsDifCate.get(cateIndex).get(
+								featureIndex);
+						countOfWordsDifCate.get(cateIndex).set(featureIndex,
+								bef + 1);
+						bef = featureCount.get(featureIndex);
+						featureCount.set(featureIndex, bef + 1);
 					}
 				}
 			}

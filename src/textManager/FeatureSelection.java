@@ -28,13 +28,18 @@ public class FeatureSelection {
 
 	public ArrayList<String> IGSelection(ArrayList<String> features,
 			int afterSize, CountNum countNum) {
+		int beforeSize = features.size();
+
+		if(afterSize>=beforeSize){
+			System.err.println("IG选择后的规模应该小于当前规模"+beforeSize);
+			return features;
+		}
 		ArrayList<Integer> featureCount = countNum.getFeatureCount();// 该特征在所有文档中的出现次数
 		ArrayList<Integer> cateCount = countNum.getDiffCateNum();// 不同类别的文本个数
 		ArrayList<ArrayList<Integer>> countOfWordsDifCate = countNum
 				.getCountOfWordsDifCate();// 不同类别下不同特征的出现次数
 		int totalSize = countNum.getTotalSize();
 
-		int beforeSize = features.size();
 		Map<String, Double> featureIG = new HashMap<String, Double>(beforeSize);// 不同特征的IG值
 
 		for (int i = 0; i < features.size(); i++) {

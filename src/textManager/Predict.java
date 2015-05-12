@@ -112,7 +112,7 @@ public class Predict {
 			ArrayList<String> features) {
 		ArrayList<Integer> results = new ArrayList<Integer>();
 		for (AnalReview analReview : reviews) {
-			 results.add(predict(analReview, features));
+			results.add(predict(analReview, features));
 		}
 		return results;
 	}
@@ -136,7 +136,7 @@ public class Predict {
 	 * @throws WriteException
 	 */
 	public void writePredResult(ArrayList<AnalReview> reviews,
-			WritableSheet sheet, ArrayList<Integer> results, int a[])
+			WritableSheet sheet, ArrayList<Integer> results, int a[][])
 			throws RowsExceededException, WriteException {
 		int i = 0;
 		Label label;
@@ -148,7 +148,7 @@ public class Predict {
 			label = new Label(1, i, oriLevel + "");
 			sheet.addCell(label);
 
-			int predLevel = a[results.get(i)];
+			int predLevel = a[results.get(i)][0];
 			label = new Label(2, i, predLevel + "");
 			sheet.addCell(label);
 
@@ -174,7 +174,7 @@ public class Predict {
 	 * @return 混淆矩阵
 	 */
 	public int[][] genConfuMatrix(ArrayList<AnalReview> reviews,
-			ArrayList<Integer> results, int a[], int b[]) {// a实际分类（5）；b预测分类
+			ArrayList<Integer> results, int a[], int b[][]) {// a实际分类（5）；b预测分类
 		int size = results.size();
 		int n = a.length;
 		int n2 = b.length;// 预测分类个数
@@ -204,7 +204,7 @@ public class Predict {
 	 * @param ConfuMtr
 	 *            混淆矩阵
 	 */
-	public double[] statisticalRate(int k, int a[], int b[], int ConfuMtr[][]) {
+	public double[] statisticalRate(int k, int a[], int b[][], int ConfuMtr[][]) {
 		int n = a.length;
 		int n2 = b.length;// 预测分类个数
 		double[] precision = new double[n2];
@@ -212,7 +212,7 @@ public class Predict {
 		double[] f1 = new double[n2];
 		double accuracy;
 		int correctSum = 0;
-		int allSum = 0;
+		int allSum = 0;// 评论总个数
 		double precisionAvg = 0;
 		double recallAvg = 0;
 		double f1Avg = 0;
@@ -223,8 +223,15 @@ public class Predict {
 		int[] sumAct = new int[n];
 		for (int i = 0; i < n; i++) {
 			for (int j = 0; j < n2; j++) {
-				if (i == j)
-					correctNum[i] = ConfuMtr[i][j];
+				boolean corTag=false;
+				for (int j2 = 0; j2 < b[j].length; j2++) {
+					if(b[j][j2]==a[i]){
+						corTag=true;
+						break;
+					}
+				}
+				if (corTag)
+					correctNum[j] += ConfuMtr[i][j];
 				sumAct[i] += ConfuMtr[i][j];
 				sumPre[j] += ConfuMtr[i][j];
 				allSum += ConfuMtr[i][j];
@@ -235,19 +242,28 @@ public class Predict {
 		logger2.info("\r\n");
 		logger2.info("precision\trecall\tf1\r\n");
 
-		for (int i = 0; i < n2; i++) {
-			precision[i] = (double) correctNum[i] / sumPre[i];
-			recall[i] = (double) correctNum[i] / sumAct[i];
-			f1[i] = 2 * precision[i] * recall[i]
-					/ (precision[i] + recall[i] + Double.MIN_VALUE);// 避免分母为0
-			logger2.info(precision[i] + "\t" + recall[i] + "\t" + f1[i]
+		for (int j = 0; j < n2; j++) {
+			precision[j] = (double) correctNum[j]
+					/ (sumPre[j] + Double.MIN_VALUE);// 避免分母为0
+			int sumActi=0;
+			for (int j2 = 0; j2 < b[j].length; j2++) {
+				for (int i = 0; i < sumAct.length; i++) {
+					if(a[i]==b[j][j2]){
+						sumActi+=sumAct[i];
+					}
+				}
+			}
+			recall[j] = (double) correctNum[j] / ( sumActi+ Double.MIN_VALUE);// 避免分母为0
+			f1[j] = 2 * precision[j] * recall[j]
+					/ (precision[j] + recall[j] + Double.MIN_VALUE);// 避免分母为0
+			logger2.info(precision[j] + "\t" + recall[j] + "\t" + f1[j]
 					+ "\r\n");
-			correctSum += correctNum[i];
+			correctSum += correctNum[j];
 
-			double weight = pOfACate.get(i);// 第i个类别的权重
-			precisionAvg += precision[i] * weight;
-			recallAvg += recall[i] * weight;
-			f1Avg += f1[i] * weight;
+			double weight = pOfACate.get(j);// 第i个类别的权重
+			precisionAvg += precision[j] * weight;
+			recallAvg += recall[j] * weight;
+			f1Avg += f1[j] * weight;
 		}
 		logger2.info("\r\n");
 		logger2.info(precisionAvg + "\t" + recallAvg + "\t" + f1Avg);
