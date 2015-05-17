@@ -2,6 +2,7 @@ package utils;
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
+import org.apache.log4j.SimpleLayout;
 
 /**日志记录器，可以写到指定的文件中，写的格式是一行一个消息
  * @author Fanny
@@ -16,6 +17,7 @@ public class MyLogger {
 		FileAppender appender = null;
 		String pattern="%m";
 		PatternLayout layout=new PatternLayout(pattern);
+		logger.setAdditivity(false);
 		try {
 			appender = new FileAppender(layout , filename,false);
 		} catch (Exception e) {

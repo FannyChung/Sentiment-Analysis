@@ -31,7 +31,7 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
-import spider.FileDeal;
+import spider.FileDealer;
 import spider.ReivewWebDriver;
 
 public class SpiderPan extends JPanel implements ActionListener {
@@ -69,11 +69,13 @@ public class SpiderPan extends JPanel implements ActionListener {
 		panel1.add(textField);
 		panel1.add(label2);
 		panel1.add(textField2);
-		panel1.add(spiderButton);
+		JPanel spJPanel=new JPanel();
+		spJPanel.add(spiderButton);
+		panel1.add(spJPanel);
 
-		FileDeal fileDeal = new FileDeal();
-		int sheetNum = fileDeal.openReadFile("t.xls");
-		String[][] data = fileDeal.readBook();
+		FileDealer fileDealer = new FileDealer();
+		int sheetNum = fileDealer.openReadFile("t.xls");
+		String[][] data = fileDealer.readBook();
 		System.out.println(data.length);
 		int col = data[0].length;
 		String[] names = new String[col];
@@ -101,7 +103,9 @@ public class SpiderPan extends JPanel implements ActionListener {
 		JPanel panel3 = new JPanel(new GridLayout(1, 2));
 		panel3.add(checkJPanel);
 		panel3.add(filterText);
-		panel3.add(button2);
+		JPanel but2Pane=new JPanel();
+		but2Pane.add(button2);
+		panel3.add(but2Pane);
 
 		// jpanel.add(panel1);
 		this.add(panel1, BorderLayout.NORTH);
@@ -112,15 +116,14 @@ public class SpiderPan extends JPanel implements ActionListener {
 
 		spiderButton.addActionListener(this);
 		button2.addActionListener(this);
-
 	}
 
 	public void refreshTable() {
 		table.removeAll();
 
-		FileDeal fileDeal = new FileDeal();
-		int sheetNum = fileDeal.openReadFile("t.xls");
-		String[][] data = fileDeal.readBook();
+		FileDealer fileDealer = new FileDealer();
+		int sheetNum = fileDealer.openReadFile("t.xls");
+		String[][] data = fileDealer.readBook();
 		System.out.println(data.length);
 		int col = data[0].length;
 		String[] names = new String[col];

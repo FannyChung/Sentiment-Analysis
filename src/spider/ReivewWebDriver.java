@@ -243,8 +243,8 @@ public class ReivewWebDriver {
 		HashSet<ProductUrl> productsStrings = nDriver.getProductPage(s);// 获取搜索后得到的所有商品url
 
 		WritableSheet sheet = null;
-		FileDeal fileDeal = new FileDeal();
-		fileDeal.openWriteFile("t.xls");
+		FileDealer fileDealer = new FileDealer();
+		fileDealer.openWriteFile("t.xls");
 		int i = 0;
 		for (ProductUrl productUrl : productsStrings) {
 			if (i == productNum) {
@@ -252,9 +252,9 @@ public class ReivewWebDriver {
 			}
 
 			nDriver.nextPage(nDriver.getReviewPage(productUrl.getString()));
-			sheet = fileDeal.getBook().createSheet("product " + (i + 1), i);// 设置表单名字和编号
+			sheet = fileDealer.getBook().createSheet("product " + (i + 1), i);// 设置表单名字和编号
 			try {
-				fileDeal.wirteReviews(reviews, sheet);
+				fileDealer.wirteReviews(reviews, sheet);
 			} catch (RowsExceededException e) {
 				e.printStackTrace();
 			} catch (WriteException e) {
@@ -264,7 +264,7 @@ public class ReivewWebDriver {
 			i++;
 		}
 
-		fileDeal.closeWriteFile();
+		fileDealer.closeWriteFile();
 		nDriver.driver.close();
 	}
 

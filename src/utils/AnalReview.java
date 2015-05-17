@@ -40,6 +40,13 @@ public class AnalReview {
 		this.level = level;
 	}
 
+	/**
+	 * @param text2
+	 */
+	public AnalReview(String text) {
+		this.text=text;
+	}
+
 	public String getText() {
 		return text;
 	}

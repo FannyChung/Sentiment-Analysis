@@ -19,7 +19,7 @@ public class TopFrame extends JFrame {
 	 * 
 	 */
 	public TopFrame() {
-		JTabbedPane tabbedp = new JTabbedPane(JTabbedPane.LEFT);
+		JTabbedPane tabbedp = new JTabbedPane(JTabbedPane.TOP);
 		Container c = this.getContentPane();
 		tabbedp.addTab("爬取评论", new SpiderPan());
 		tabbedp.addTab("情感分析",new SentiPan());
