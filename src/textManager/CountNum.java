@@ -57,7 +57,7 @@ public class CountNum {
 						diffCateDataSet.get(i).add(analReview);
 					}
 				}
-				
+
 			}
 		}
 		// 计算不同类别下的文档个数
@@ -91,7 +91,9 @@ public class CountNum {
 	}
 
 	/**
-	 * 统计训练集的不同类别中，所有词出现的文档数 Nc,f,用二维数组countOfWordsDifCate表示
+	 * 统计训练集的不同类别中，所有词出现的文档数 Nc,f,用二维数组countOfWordsDifCate表示，
+	 * 
+	 * 向量化之前使用
 	 * 
 	 * @param features
 	 *            所有特征词
@@ -122,6 +124,11 @@ public class CountNum {
 		logger2.info("-----------------------------------------------------------------------------\r\n");
 	}
 
+	/**
+	 * 统计训练集的不同类别中，所有词出现的文档数 Nc,f,用二维数组countOfWordsDifCate表示，
+	 * 
+	 * 向量化之后使用
+	 */
 	public void countFeatureInCates() {
 		int cateNum = diffCateDataSet.size();// 类别数
 		int featNum = diffCateDataSet.get(0).get(0).getFeatureVector().length;
@@ -135,6 +142,7 @@ public class CountNum {
 			}
 			countOfWordsDifCate.add(countOfWordsAcate);
 		}
+		// 统计所有特征出现的总次数
 		for (int i = 0; i < featNum; i++) {
 			featureCount.add(0);
 		}
@@ -237,34 +245,6 @@ public class CountNum {
 		System.out.println("charSum" + charSum);
 		System.out.println("aveWords" + (double) wordSum / i);
 		System.out.println("aveChars" + (double) charSum / i);
-		// System.out.println(frequency);
-	}
-
-	/**
-	 * 将词频信息(单词+次数)写入表单中
-	 * 
-	 * @param sheet
-	 *            要写的表单
-	 * @throws WriteException
-	 *             写错误
-	 * @throws RowsExceededException
-	 *             行错误
-	 */
-	public void writeFrequecy(WritableSheet sheet)
-			throws RowsExceededException, WriteException {
-		Label label;
-		Iterator<Entry<String, Integer>> iter = frequency.entrySet().iterator();
-		int k = 0;
-		while (iter.hasNext()) {
-			Entry<String, Integer> entry = iter.next();
-			String string = entry.getKey();
-			Integer sfre = entry.getValue();
-			label = new Label(0, k, string);
-			sheet.addCell(label);
-			label = new Label(1, k, sfre.toString());
-			sheet.addCell(label);
-			k++;
-		}
 	}
 
 	/**

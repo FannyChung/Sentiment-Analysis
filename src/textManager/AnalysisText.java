@@ -2,6 +2,9 @@ package textManager;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import utils.AnalReview;
 import utils.NlpirTest.CLibrary;
 import jxl.Sheet;
@@ -90,25 +93,60 @@ public class AnalysisText {
 	 *            评论标题
 	 */
 	private void analysis(String text, int level, String title) {
-		text += ("。 " + title);
+		text += (" " + title);
 		AnalReview review = new AnalReview(text, level);
 		// 统计字数
 		int charsCount = 0;
 		int wordsCount = 0;
-//		if (text.length() > GUESS_LEN)
-//			text = filt(text, allEmotionRelatedWords, review);
+		// if (text.length() > GUESS_LEN)
+		// text = filt(text, allEmotionRelatedWords, review);
 
 		// 分词，并统计词数和词出现的词数
-		String[] analText = wordSeg(text);
-		for (String string : analText) {
-			review.getFrequency().merge(string, 1,
-					(value, newValue) -> addOne(value));
-			charsCount += string.length();// 统计字数
-			wordsCount++;// 统计词数
+		String[] sentences=splitWithEndChar(text);
+		ArrayList<String[]> wordOfSentence=new ArrayList<String[]>(sentences.length);//每句话里面的词
+		for (String sentence : sentences) {//每个句子
+			String[] analText = wordSeg(sentence);
+			wordOfSentence.add(analText);
+			for (String string : analText) {
+				review.getFrequency().merge(string, 1,
+						(value, newValue) -> addOne(value));
+				charsCount += string.length();// 统计字数
+				wordsCount++;// 统计词数
+			}
 		}
 		review.setWordsCount(wordsCount);
 		review.setCharsCount(charsCount);
+		review.setWordOfSentence(wordOfSentence);
 		reviews.add(review);
+	}
+
+	/**
+	 * 进行句子分割
+	 * 
+	 * @param str
+	 *            要分割的片段
+	 * @return 分割后的句子数组
+	 */
+	private String[] splitWithEndChar(String str) {
+		/* 正则表达式：句子结束符 */
+		String regEx = "[.。？！?!]+";
+		Pattern p = Pattern.compile(regEx);
+		Matcher m = p.matcher(str);
+
+		/* 按照句子结束符分割句子 */
+		String[] words = p.split(str);
+
+		/* 将句子结束符连接到相应的句子后 */
+		if (words.length > 0) {
+			int count = 0;
+			while (count < words.length) {
+				if (m.find()) {
+					words[count] += m.group();
+				}
+				count++;
+			}
+		}
+		return words;
 	}
 
 	private String filt(String inString, ArrayList<String> emotionWords,
@@ -161,6 +199,12 @@ public class AnalysisText {
 			System.err.println("初始化失败！fail reason is " + nativeBytes);
 			return;
 		}
+
+		CLibrary.Instance.NLPIR_ImportUserDict("新词.txt");
+
+		for (String string : allEmotionRelatedWords) {
+			CLibrary.Instance.NLPIR_AddUserWord(string);
+		}
 	}
 
 	/**
@@ -170,7 +214,7 @@ public class AnalysisText {
 	 *            输入的文本
 	 * @return 分词后的单词的数组
 	 */
-	public String[] wordSeg(String reivewText) {
+	private String[] wordSeg(String reivewText) {
 		try {
 			reivewText = full2HalfChange(reivewText);
 		} catch (UnsupportedEncodingException e) {
@@ -219,6 +263,8 @@ public class AnalysisText {
 			label = new Label(4, i, review.getFrequency().toString());
 			sheet.addCell(label);
 			label = new Label(5, i, review.getFiltedText());
+			sheet.addCell(label);
+			label = new Label(6, i, review.printSentWords());
 			sheet.addCell(label);
 			i++;
 		}

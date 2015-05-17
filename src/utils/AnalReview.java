@@ -9,10 +9,11 @@ public class AnalReview {
 	 */
 	private String text;
 	private ArrayList<String> words;
-	private ArrayList<ArrayList<String>> wordOfSentence;//每句话里面的词
+	private ArrayList<String[]> wordOfSentence;//每句话里面的词
 
 	private String filtedText;//被过滤的句子
 	private boolean[] featureVector;//特征向量对应的值
+	private int[] emoFeatVector;//情感词特征向量
 
 	/**
 	 * 评论星级
@@ -132,14 +133,14 @@ public class AnalReview {
 	/**
 	 * @return the wordOfSentence
 	 */
-	public ArrayList<ArrayList<String>> getWordOfSentence() {
+	public ArrayList<String[]> getWordOfSentence() {
 		return wordOfSentence;
 	}
 
 	/**
 	 * @param wordOfSentence the wordOfSentence to set
 	 */
-	public void setWordOfSentence(ArrayList<ArrayList<String>> wordOfSentence) {
+	public void setWordOfSentence(ArrayList<String[]> wordOfSentence) {
 		this.wordOfSentence = wordOfSentence;
 	}
 
@@ -150,4 +151,28 @@ public class AnalReview {
 		this.filtedText = filtedText;
 	}
 
+	/**
+	 * @return the emoFeatVector
+	 */
+	public int[] getEmoFeatVector() {
+		return emoFeatVector;
+	}
+
+	/**
+	 * @param emoFeatVector the emoFeatVector to set
+	 */
+	public void setEmoFeatVector(int[] emoFeatVector) {
+		this.emoFeatVector = emoFeatVector;
+	}
+
+	public String printSentWords() {
+		String ret="";
+		for (String[] strings : wordOfSentence) {
+			for (String string : strings) {
+				ret+=string;
+			}
+			ret+="\n";
+		}
+		return ret;
+	}
 }

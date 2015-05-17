@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+
 import utils.MyLogger;
 import jxl.write.Label;
 import jxl.write.WritableSheet;
@@ -26,6 +27,14 @@ public class FeatureSelection {
 	private List<Map.Entry<String, Integer>> featuresFreq;
 	private ArrayList<String> featureStrings;
 
+	public void updateFeatFre() {
+		List<Map.Entry<String, Integer>> tmp=new ArrayList<Map.Entry<String,Integer>>();
+		for (Entry<String, Integer> string2Int : featuresFreq) {
+			if(featureStrings.contains(string2Int.getKey()))
+				tmp.add(string2Int);
+		}
+		featuresFreq=tmp;
+	}
 	public ArrayList<String> IGSelection(ArrayList<String> features,
 			int afterSize, CountNum countNum) {
 		int beforeSize = features.size();
@@ -90,8 +99,7 @@ public class FeatureSelection {
 		return afterFeatures;
 	}
 
-	public void removeStopWords(ArrayList<String> stopWords) {// 前20%高频词
-																// &&在停用词表里
+	public void removeStopWords(ArrayList<String> stopWords) {// 前20%高频词&&在停用词表里
 		int firstSize = (int) (featureStrings.size() * 0.2);
 		int totalSize = featureStrings.size();
 		MyLogger logger = new MyLogger("删除停用词.txt");
@@ -188,7 +196,6 @@ public class FeatureSelection {
 			sheet.addCell(label);
 			k++;
 		}
-		System.out.println(featuresFreq);
 	}
 
 	public List<Map.Entry<String, Integer>> getFeaturesFreq() {
@@ -200,10 +207,10 @@ public class FeatureSelection {
 	}
 
 	/**
-	 * @param features
+	 * @param featureStrings
 	 *            the features to set
 	 */
-	public void setFeatures(List<Map.Entry<String, Integer>> features) {
-		this.featuresFreq = features;
+	public void setFeatures(ArrayList<String> featureStrings) {
+		this.featureStrings = featureStrings;
 	}
 }
