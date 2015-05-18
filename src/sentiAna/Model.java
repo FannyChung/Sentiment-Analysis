@@ -19,34 +19,61 @@ import jxl.write.WriteException;
 import jxl.write.biff.RowsExceededException;
 
 /**
- * 统计训练集的特征出现的文档数、不同类别的文档数
+ * 统计特征出现的文档数、不同类别的文档数等信息
  * 
- * @author hp
+ * @author ZhongFang
  *
  */
 public class Model {
-	private ArrayList<ArrayList<AnalReview>> diffCateDataSet;// 不同类别的训练集
-	private ArrayList<Integer> diffCateNum;// 不同类别的文本个数
+	/**
+	 * 不同类别的训练集
+	 */
+	private ArrayList<ArrayList<AnalReview>> diffCateDataSet;
+	/**
+	 * 不同类别的文本个数
+	 */
+	private ArrayList<Integer> diffCateNum;
 
-	private ArrayList<Integer> featureCount;// 该特征在所有文档中的出现次数
-	private ArrayList<ArrayList<Integer>> countOfWordsDifCate;// 词在不同类别中的计数
+	/**
+	 * 该特征在所有文档中的出现次数
+	 */
+	private ArrayList<Integer> featureCount;
+	/**
+	 * 词在不同类别中的计数
+	 */
+	private ArrayList<ArrayList<Integer>> countOfWordsDifCate;
+	/**
+	 * 数据集的总大小
+	 */
 	private int totalSize;
+	/**
+	 * 特征词及其词频信息
+	 */
 	private HashMap<String, Integer> frequency;
-	
+
+	/**
+	 * 训练集大小
+	 */
 	private int sampleSize;
-	private ArrayList<ArrayList<Double>> pOfWordInDifCate;// P(f|c)
-	private ArrayList<Double> pOfACate;// P(c)
-	private MyLogger logger1 = new MyLogger("不同类别的文本个数.txt");
-	private MyLogger logger2 = new MyLogger("不同特征的文本个数.txt");
+	/**
+	 * 每个特征在各个类中的概率P(f|c)
+	 */
+	private ArrayList<ArrayList<Double>> pOfWordInDifCate;
+	/**
+	 * 每个类的概率P(c)
+	 */
+	private ArrayList<Double> pOfACate;
 
 	/**
 	 * 将所有类别的评论按星级分类，统计不同类别的文档数
 	 * 
 	 * @param reviews
+	 *            所有的评论集合
 	 * @param reviewLevels
+	 *            分类结果与原来的评价星级的对应数组
 	 */
 	public void separateReviewsByLevel(ArrayList<AnalReview> reviews,
-			int reviewLevels[][]) {// 注意这个数组，
+			int reviewLevels[][]) {
 		totalSize = reviews.size();
 		int cateNum = reviewLevels.length;
 		diffCateDataSet = new ArrayList<ArrayList<AnalReview>>(cateNum);
@@ -70,6 +97,7 @@ public class Model {
 		for (ArrayList<AnalReview> arrayList : diffCateDataSet) {// size=每个类别中的文档数
 			diffCateNum.add(arrayList.size());
 		}
+		MyLogger logger1 = new MyLogger("不同类别的文本个数.txt");
 		logger1.info(diffCateNum.toString() + "\r\n\r\n\r\n");
 	}
 
@@ -117,6 +145,7 @@ public class Model {
 		// 统计所有特征出现的总次数
 		int f = countOfWordsDifCate.get(0).size();// 特征数
 		featureCount = new ArrayList<Integer>(f);
+		MyLogger logger2 = new MyLogger("不同特征的文本个数.txt");
 		for (int i = 0; i < f; i++) {
 			int sum = 0;
 			for (int j = 0; j < n; j++) {
@@ -301,7 +330,7 @@ public class Model {
 	public void setTotalSize(int totalSize) {
 		this.totalSize = totalSize;
 	}
-	
+
 	/**
 	 * 计算所有特征在所有类别中的概率P(f|c)，形成矩阵
 	 * 
@@ -311,7 +340,7 @@ public class Model {
 		int cateSize = countOfWordsDifCate.size();// 类别数
 		int featureSize = countOfWordsDifCate.get(0).size();// 特征数
 		MyLogger logger = new MyLogger("Pfc.txt");
-		pOfWordInDifCate = new ArrayList<ArrayList<Double>>(cateSize);//二维数组，外面是类别，里面是特征词
+		pOfWordInDifCate = new ArrayList<ArrayList<Double>>(cateSize);// 二维数组，外面是类别，里面是特征词
 		for (int cateIndex = 0; cateIndex < cateSize; cateIndex++) {
 			logger.info("\r\n\r\n" + "c" + cateIndex + ":\r\n");
 			ArrayList<Double> resList = new ArrayList<Double>(featureSize);
@@ -339,7 +368,6 @@ public class Model {
 			pOfACate.add(p);
 		}
 	}
-	
 
 	/**
 	 * @return the pOfWordInDifCate

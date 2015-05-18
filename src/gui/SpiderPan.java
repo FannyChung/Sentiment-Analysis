@@ -35,56 +35,64 @@ import spider.FileDealer;
 import spider.ReivewWebDriver;
 
 public class SpiderPan extends JPanel implements ActionListener {
-	JMenuBar mainMenu = new JMenuBar();
-	JMenu menuSystem = new JMenu();
-	JMenuItem itemExit = new JMenuItem();
-	JMenu menuStu = new JMenu();
-	JMenuItem itemAddS = new JMenuItem();
-	JMenu itemSearchGrd = new JMenu();// 成绩查询
-	JMenuItem itemSearchMutGrd = new JMenuItem();
+	/**
+	 * 要搜索的关键字的输入框
+	 */
+	private JTextField spiderWord = new JTextField();
+	/**
+	 * 要搜索的商品个数的输入框
+	 */
+	private JTextField spiderNum = new JTextField();
+	/**
+	 * 要筛选的文本的输入框
+	 */
+	private JTextField filterText = new JTextField();
+	/**
+	 * 爬取评论的按钮
+	 */
+	private JButton spiderButton = new JButton("重新爬取");
+	/**
+	 * 筛选表格的按钮
+	 */
+	private JButton filtButton = new JButton("筛选");
 
-	JTextField textField = new JTextField();
-	JTextField textField2 = new JTextField();
-	JTextField filterText = new JTextField();
-	JButton spiderButton = new JButton("重新爬取");
-	JButton button2 = new JButton("刷新");
+	/**
+	 * 要筛选的五个星级的单选框
+	 */
+	private JCheckBox[] levelChecks = new JCheckBox[5];
 
-	JCheckBox[] levelChecks = new JCheckBox[5];
+	/**
+	 * 用于实现表格排序和过滤的对象
+	 */
+	private TableRowSorter<TableModel> sorter;
+	/**
+	 * 显示文件的表格
+	 */
+	private JTable table = new JTable();
 
-	TableRowSorter<TableModel> sorter;
-	JTable table = new JTable();
-
+	/**
+	 * 构造函数，布置面板内容
+	 */
 	public SpiderPan() {
-		enableEvents(AWTEvent.WINDOW_EVENT_MASK);
 		this.setLayout(new BorderLayout());
 		JPanel jpanel = new JPanel(new BorderLayout());
 		JPanel panel1 = new JPanel(new GridLayout(1, 5));
 		JPanel panel2 = new JPanel();
 
-		
 		JLabel label = new JLabel("关键字");
 		JLabel label2 = new JLabel("商品数目");
 
 		panel1.add(label);
-		panel1.add(textField);
+		panel1.add(spiderWord);
 		panel1.add(label2);
-		panel1.add(textField2);
-		JPanel spJPanel=new JPanel();
+		panel1.add(spiderNum);
+		JPanel spJPanel = new JPanel();
 		spJPanel.add(spiderButton);
 		panel1.add(spJPanel);
 
-		FileDealer fileDealer = new FileDealer();
-		int sheetNum = fileDealer.openReadFile("t.xls");
-		String[][] data = fileDealer.readBook();
-		System.out.println(data.length);
-		int col = data[0].length;
-		String[] names = new String[col];
-		for (int i = 0; i < col; i++) {
-			names[i] = (i + "");
-		}
-		DefaultTableModel dtModel = new DefaultTableModel(data, names);
+		DefaultTableModel dtModel = TableHelper.loadTable("t.xls");
 		table.setModel(dtModel);
-		FitTableColumns(table);
+		TableHelper.FitTableColumns(table);
 		sorter = new TableRowSorter<TableModel>(dtModel);
 		table.setRowSorter(sorter);
 		JScrollPane scrollPane = new JScrollPane();
@@ -94,7 +102,7 @@ public class SpiderPan extends JPanel implements ActionListener {
 		table.setColumnSelectionAllowed(true);
 		table.setRowSelectionAllowed(true);
 		panel2.add(scrollPane);
-		
+
 		JPanel checkJPanel = new JPanel();
 		for (int i = 0; i < levelChecks.length; i++) {
 			levelChecks[i] = new JCheckBox((i + 1) + "");
@@ -103,90 +111,16 @@ public class SpiderPan extends JPanel implements ActionListener {
 		JPanel panel3 = new JPanel(new GridLayout(1, 2));
 		panel3.add(checkJPanel);
 		panel3.add(filterText);
-		JPanel but2Pane=new JPanel();
-		but2Pane.add(button2);
+		JPanel but2Pane = new JPanel();
+		but2Pane.add(filtButton);
 		panel3.add(but2Pane);
 
-		// jpanel.add(panel1);
 		this.add(panel1, BorderLayout.NORTH);
 		this.add(panel3, BorderLayout.SOUTH);
 		this.add(scrollPane);
-		// jpanel.add(table);
-		// this.add(jpanel);
 
 		spiderButton.addActionListener(this);
-		button2.addActionListener(this);
-	}
-
-	public void refreshTable() {
-		table.removeAll();
-
-		FileDealer fileDealer = new FileDealer();
-		int sheetNum = fileDealer.openReadFile("t.xls");
-		String[][] data = fileDealer.readBook();
-		System.out.println(data.length);
-		int col = data[0].length;
-		String[] names = new String[col];
-		for (int i = 0; i < col; i++) {
-			names[i] = (i + "");
-		}
-		DefaultTableModel dtModel = new DefaultTableModel(data, names);
-		table.setModel(dtModel);
-		table.repaint();
-		table.updateUI();
-	}
-
-	public void FitTableColumns(JTable myTable) {
-		JTableHeader header = myTable.getTableHeader();
-		int rowCount = myTable.getRowCount();
-		Enumeration columns = myTable.getColumnModel().getColumns();
-		while (columns.hasMoreElements()) {
-			TableColumn column = (TableColumn) columns.nextElement();
-			int col = header.getColumnModel().getColumnIndex(
-					column.getIdentifier());
-			int width = (int) myTable
-					.getTableHeader()
-					.getDefaultRenderer()
-					.getTableCellRendererComponent(myTable,
-							column.getIdentifier(), false, false, -1, col)
-					.getPreferredSize().getWidth();
-			for (int row = 0; row < rowCount; row++) {
-				int preferedWidth = (int) myTable
-						.getCellRenderer(row, col)
-						.getTableCellRendererComponent(myTable,
-								myTable.getValueAt(row, col), false, false,
-								row, col).getPreferredSize().getWidth();
-				width = Math.max(width, preferedWidth);
-			}
-			header.setResizingColumn(column);
-			column.setWidth(width + myTable.getIntercellSpacing().width);
-		}
-	}
-
-	public void filt(ArrayList<Integer> selectedLevel) {
-		ArrayList<RowFilter<Object,Object>> filters = new ArrayList<RowFilter<Object,Object>>(2);  
-		RowFilter<Object, Object> textFilter=null;
-		RowFilter<Object, Object> levelFilter=null;
-
-		String text = filterText.getText().trim();
-		if (text.length() != 0) {
-			textFilter=RowFilter.regexFilter(text);
-		}
-		if(!selectedLevel.isEmpty()){
-			String levels="[";
-			for (Integer integer : selectedLevel) {
-				levels+=((integer+1)+"");
-			}
-			levels+="]";
-			levelFilter=RowFilter.regexFilter(levels, 1);
-		}
-		if(levelFilter!=null){
-			filters.add(levelFilter);	
-		}
-		if(textFilter!=null){
-			filters.add(textFilter);
-		}
-		sorter.setRowFilter(RowFilter.andFilter(filters));
+		filtButton.addActionListener(this);
 	}
 
 	/*
@@ -196,22 +130,32 @@ public class SpiderPan extends JPanel implements ActionListener {
 	 * java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
 	 */
 	public void actionPerformed(ActionEvent e) {
-		if (e.getSource() == spiderButton) {
-			String searchStr = textField.getText();
-			int n = Integer.parseInt(textField2.getText());
-			ReivewWebDriver reivewWebDriver = new ReivewWebDriver();
-			reivewWebDriver.runSpider(searchStr, n);
-			JOptionPane.showMessageDialog(null, "已保存到excel文件t.xls", "爬取成功",
-					JOptionPane.ERROR_MESSAGE);
-			refreshTable();
-		} else {
-			ArrayList<Integer> selectedLevel = new ArrayList<Integer>(5);
+		if (e.getSource() == spiderButton) {// 从网络上爬取评论
+			if (!(spiderWord.getText().trim().length() == 0 || spiderNum
+					.getText().trim().length() == 0)) {// 如果有指定的关键字和个数，则开始爬取，否则，只进行刷新表格
+				String searchStr = spiderWord.getText();
+				int n = Integer.parseInt(spiderNum.getText());
+				ReivewWebDriver reivewWebDriver = new ReivewWebDriver();
+				reivewWebDriver.runSpider(searchStr, n);
+				JOptionPane.showMessageDialog(null, "已保存到excel文件t.xls", "爬取成功",
+						JOptionPane.ERROR_MESSAGE);
+			}
+
+			// 刷新表格
+			DefaultTableModel dtModel = TableHelper.loadTable("t.xls");
+			table.setModel(dtModel);
+			TableHelper.FitTableColumns(table);
+			table.repaint();
+			table.updateUI();
+		} else {// 根据指定星级和字符串，筛选表格
+			ArrayList<Integer> selectedLevel = new ArrayList<Integer>(5);// 获取指定的星级
 			for (int i = 0; i < levelChecks.length; i++) {
 				if (levelChecks[i].isSelected()) {
 					selectedLevel.add(i);
 				}
 			}
-			filt(selectedLevel);
+			String text = filterText.getText().trim();// 获取指定的字符串
+			TableHelper.filt(selectedLevel, text, sorter);// 按照“且”的逻辑过滤
 		}
 
 	}

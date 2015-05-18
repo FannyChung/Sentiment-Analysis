@@ -43,6 +43,9 @@ public class FileDealer {
 		return sheetNum;
 	}
 
+	public void closeReadFile() {
+		readBook.close();
+	}
 	/**
 	 * @param sheetNum
 	 *            表单编号
@@ -87,6 +90,17 @@ public class FileDealer {
 		return data;
 	}
 
+	public void writeResult(String[] text,int[] result, WritableSheet sheet) throws RowsExceededException, WriteException {
+		int row=0;
+		Label label;
+		for (int i : result) {
+			label=new Label(0, row, text[row]);
+			sheet.addCell(label);
+			label=new Label(1, row, (i+1)+"");
+			sheet.addCell(label);
+			row++;
+		}
+	}
 	/**
 	 * 打印所有的评论
 	 *
@@ -98,22 +112,22 @@ public class FileDealer {
 	 */
 	public void wirteReviews(Vector<Review> reviews, WritableSheet sheet)
 			throws RowsExceededException, WriteException {
-		int col = 0;
+		int row = 0;
 		Label newLabel;
 		// newLabel=new Label(0,0,"文本");
 		for (Review review : reviews) {
-			newLabel = new Label(0, col, review.getText());
+			newLabel = new Label(0, row, review.getText());
 			sheet.addCell(newLabel);
-			newLabel = new Label(1, col, review.getLevel() + "");
+			newLabel = new Label(1, row, review.getLevel() + "");
 			sheet.addCell(newLabel);
-			newLabel = new Label(2, col, review.getReTitle());
+			newLabel = new Label(2, row, review.getReTitle());
 			sheet.addCell(newLabel);
-			newLabel = new Label(3, col, review.getTime().toString());
+			newLabel = new Label(3, row, review.getTime().toString());
 			sheet.addCell(newLabel);
-			newLabel = new Label(4, col, review.getUserName());
+			newLabel = new Label(4, row, review.getUserName());
 			sheet.addCell(newLabel);
-			col++;
-			System.out.println("excel--------------------------------" + col);
+			row++;
+			System.out.println("excel--------------------------------" + row);
 		}
 	}
 

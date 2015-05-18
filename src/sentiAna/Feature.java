@@ -18,29 +18,49 @@ import jxl.write.WriteException;
 import jxl.write.biff.RowsExceededException;
 
 /**
- * 特征选择
+ * 特征类
  * 
- * @author hp
+ * @author ZhongFang
  *
  */
 public class Feature {
+	/**
+	 * 特征的字符串以及对应的词频组成的集合
+	 */
 	private List<Map.Entry<String, Integer>> featuresFreq;
+	/**
+	 * 特征的字符串集合
+	 */
 	private ArrayList<String> featureStrings;
 
+	/**
+	 * 根据现有的字符串更新featuresFreq
+	 */
 	public void updateFeatFre() {
-		List<Map.Entry<String, Integer>> tmp=new ArrayList<Map.Entry<String,Integer>>();
+		List<Map.Entry<String, Integer>> tmp = new ArrayList<Map.Entry<String, Integer>>();
 		for (Entry<String, Integer> string2Int : featuresFreq) {
-			if(featureStrings.contains(string2Int.getKey()))
+			if (featureStrings.contains(string2Int.getKey()))
 				tmp.add(string2Int);
 		}
-		featuresFreq=tmp;
+		featuresFreq = tmp;
 	}
+
+	/**
+	 * 进行信息增益特征选择
+	 * 
+	 * @param features
+	 *            特征集
+	 * @param afterSize
+	 *            指定的选择后的大小
+	 * @param model
+	 *            包含特征概率信息的模型
+	 * @return 过滤后的特征字符串集合
+	 */
 	public ArrayList<String> IGSelection(ArrayList<String> features,
 			int afterSize, Model model) {
 		int beforeSize = features.size();
-
-		if(afterSize>=beforeSize){
-			System.err.println("IG选择后的规模应该小于当前规模"+beforeSize);
+		if (afterSize >= beforeSize) {// IG选择后的规模应该小于当前规模
+			System.err.println("IG选择后的规模应该小于当前规模" + beforeSize);
 			return features;
 		}
 		ArrayList<Integer> featureCount = model.getFeatureCount();// 该特征在所有文档中的出现次数
@@ -49,6 +69,7 @@ public class Feature {
 				.getCountOfWordsDifCate();// 不同类别下不同特征的出现次数
 		int totalSize = model.getTotalSize();
 
+		// 计算每个特征的IG
 		Map<String, Double> featureIG = new HashMap<String, Double>(beforeSize);// 不同特征的IG值
 
 		for (int i = 0; i < features.size(); i++) {
@@ -89,24 +110,28 @@ public class Feature {
 			}
 		});
 
+		// 选择前afterSize个并返回
 		ArrayList<String> afterFeatures = new ArrayList<String>(afterSize);
-		MyLogger logger = new MyLogger("特征IG.txt");
 		for (int i = 0; i < afterSize; i++) {
 			Entry<String, Double> entry = sortedIG.get(i);
 			afterFeatures.add(entry.getKey());
-			logger.info(entry + "\r\n");
 		}
 		return afterFeatures;
 	}
 
+	/**
+	 * 根据停用词过滤，过滤词频是前20%并且在停用词表的词
+	 * 
+	 * @param stopWords
+	 *            停用词表
+	 */
 	public void removeStopWords(ArrayList<String> stopWords) {// 前20%高频词&&在停用词表里
 		int firstSize = (int) (featureStrings.size() * 0.2);
 		int totalSize = featureStrings.size();
 		MyLogger logger = new MyLogger("删除停用词.txt");
-		for (int i = totalSize - 1, c = 0; c < firstSize; c++,i--) {
+		for (int i = totalSize - 1, c = 0; c < firstSize; c++, i--) {
 			if (stopWords.contains(featureStrings.get(i))) {
 				logger.info(featuresFreq.get(i).toString() + "\r\n");
-
 				featuresFreq.remove(i);
 				featureStrings.remove(i);
 			}
@@ -117,6 +142,7 @@ public class Feature {
 	 * 按词出现的词数把词进行排序
 	 * 
 	 * @param frequecy
+	 *            待排序的词与词频的映射
 	 */
 	public void sortByFreq(Map<String, Integer> frequecy) {
 		featuresFreq = new ArrayList<Map.Entry<String, Integer>>(
@@ -137,15 +163,24 @@ public class Feature {
 			featureStrings.add(featuresFreq.get(i).getKey());
 		}
 	}
-	
-	public void removeByDF(ArrayList<Integer> featureCount,int minDF) {//删除文档频率太小的词
+
+	/**
+	 * 根据DF过滤，删除文档频率太小的词
+	 * 
+	 * @param featureCount
+	 *            词出现的文档数
+	 * @param minDF
+	 *            指定的最小文档
+	 */
+	public void removeByDF(ArrayList<Integer> featureCount, int minDF) {
 		MyLogger logger = new MyLogger("删除DF.txt");
-		int removeCount=0;
+		int removeCount = 0;
 		for (int i = 0; i < featureCount.size(); i++) {
-			if(featureCount.get(i)<=minDF){
-				logger.info(featuresFreq.get(i-removeCount).toString() + "\r\n");
-				featuresFreq.remove(i-removeCount);
-				featureStrings.remove(i-removeCount);
+			if (featureCount.get(i) <= minDF) {
+				logger.info(featuresFreq.get(i - removeCount).toString()
+						+ "\r\n");
+				featuresFreq.remove(i - removeCount);
+				featureStrings.remove(i - removeCount);
 				removeCount++;
 			}
 		}
@@ -182,6 +217,16 @@ public class Feature {
 		}
 	}
 
+	/**
+	 * 在指定表格中打印词及其词频
+	 * 
+	 * @param sheet
+	 *            指定表格
+	 * @throws RowsExceededException
+	 *             行错误
+	 * @throws WriteException
+	 *             写错误
+	 */
 	public void writeFeature(WritableSheet sheet) throws RowsExceededException,
 			WriteException {
 		Label label;
@@ -198,17 +243,23 @@ public class Feature {
 		}
 	}
 
+	/**
+	 * @return 词及其词频映射集合
+	 */
 	public List<Map.Entry<String, Integer>> getFeaturesFreq() {
 		return featuresFreq;
 	}
 
+	/**
+	 * @return 特征的字符串集合
+	 */
 	public ArrayList<String> getFeatureString() {
 		return featureStrings;
 	}
 
-	/**
+	/**设置特征的字符串集合
 	 * @param featureStrings
-	 *            the features to set
+	 *            特征的字符串集合
 	 */
 	public void setFeatures(ArrayList<String> featureStrings) {
 		this.featureStrings = featureStrings;

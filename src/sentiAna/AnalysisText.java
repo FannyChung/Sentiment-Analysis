@@ -16,19 +16,21 @@ import jxl.write.biff.RowsExceededException;
 /**
  * 从excel表中读取信息 分析评论文本 写入excel表中
  * 
- * @author hp
- *
- */
-/**
- * @author hp
+ * @author ZhongFang
  *
  */
 public class AnalysisText {
 
+	/**
+	 * 所有评论的集合
+	 */
 	private ArrayList<AnalReview> reviews = new ArrayList<AnalReview>();
+	/**
+	 * 所有情感相关词
+	 */
 	private ArrayList<String> allEmotionRelatedWords;
-	private String nativeBytes;
-	private final int GUESS_LEN = 50;
+
+	// private final int GUESS_LEN = 50;//如果评论文本大于这个长度，则进行主客观过滤
 
 	/**
 	 * 处理一个表单里的评论
@@ -49,7 +51,8 @@ public class AnalysisText {
 	 * 全角转半角的 转换函数
 	 * 
 	 * @param QJstr
-	 * @return
+	 *            转换前的字符串
+	 * @return 转换后的字符串
 	 * @throws UnsupportedEncodingException
 	 */
 	private final String full2HalfChange(String QJstr)
@@ -98,13 +101,14 @@ public class AnalysisText {
 		// 统计字数
 		int charsCount = 0;
 		int wordsCount = 0;
-		// if (text.length() > GUESS_LEN)
+		// if (text.length() > GUESS_LEN)//主客观文本过滤
 		// text = filt(text, allEmotionRelatedWords, review);
 
 		// 分词，并统计词数和词出现的词数
-		String[] sentences=splitWithEndChar(text);
-		ArrayList<String[]> wordOfSentence=new ArrayList<String[]>(sentences.length);//每句话里面的词
-		for (String sentence : sentences) {//每个句子
+		String[] sentences = splitWithEndChar(text);
+		ArrayList<String[]> wordOfSentence = new ArrayList<String[]>(
+				sentences.length);// 每句话里面的词
+		for (String sentence : sentences) {// 每个句子
 			String[] analText = wordSeg(sentence);
 			wordOfSentence.add(analText);
 			for (String string : analText) {
@@ -149,8 +153,16 @@ public class AnalysisText {
 		return words;
 	}
 
-	private String filt(String inString, ArrayList<String> emotionWords,
-			AnalReview review) {
+	/**
+	 * 对评论文本进行主客观句子的过滤
+	 * 
+	 * @param inString
+	 *            待过滤的字符串
+	 * @param review
+	 *            评论对象
+	 * @return 过滤后的字符串
+	 */
+	private String filt(String inString, AnalReview review) {
 		String[] subStrings = inString.split("[。？！?.!]+");
 		String filtedString = "";
 		for (String string : subStrings) {// 每个句子
@@ -195,20 +207,20 @@ public class AnalysisText {
 		int init_flag = CLibrary.Instance.NLPIR_Init(argu, 1, "0");
 
 		if (0 == init_flag) {
-			nativeBytes = CLibrary.Instance.NLPIR_GetLastErrorMsg();
+			String nativeBytes = CLibrary.Instance.NLPIR_GetLastErrorMsg();
 			System.err.println("初始化失败！fail reason is " + nativeBytes);
 			return;
 		}
 
-		CLibrary.Instance.NLPIR_ImportUserDict("新词.txt");
+		CLibrary.Instance.NLPIR_ImportUserDict("新词.txt");// 导入新词
 
-		for (String string : allEmotionRelatedWords) {
+		for (String string : allEmotionRelatedWords) {// 导入所有的情感词
 			CLibrary.Instance.NLPIR_AddUserWord(string);
 		}
 	}
 
 	/**
-	 * 利用分词器对一段文本分词
+	 * 利用分词器对一个评论的文本分词
 	 * 
 	 * @param reivewText
 	 *            输入的文本
@@ -224,7 +236,8 @@ public class AnalysisText {
 																	// 0-9a-zA-Z
 				" ");// 去除特殊字符，保留感叹号和问号
 		reivewText = reivewText.replaceAll("\\s+", " ");
-		nativeBytes = CLibrary.Instance.NLPIR_ParagraphProcess(reivewText, 0);
+		String nativeBytes = CLibrary.Instance.NLPIR_ParagraphProcess(
+				reivewText, 0);
 		nativeBytes = nativeBytes.replaceAll("\\s+", " ");
 		String[] A = nativeBytes.split(" ");
 		return A;
@@ -270,13 +283,19 @@ public class AnalysisText {
 		}
 	}
 
+	/**
+	 * @return 所有评论的集合
+	 */
 	public ArrayList<AnalReview> getReviews() {
 		return reviews;
 	}
 
 	/**
+	 * 设置所有情感相关词
+	 * 
 	 * @param allEmotionRelatedWords
-	 *            the allEmotionRelatedWords to set
+	 *            用于设置的情感相关词的集合
+	 * 
 	 */
 	public void setAllEmotionRelatedWords(
 			ArrayList<String> allEmotionRelatedWords) {

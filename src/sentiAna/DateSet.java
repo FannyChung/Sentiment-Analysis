@@ -16,13 +16,13 @@ import utils.AnalReview;
 /**
  * 分离训练集和测试集,并向量化
  * 
- * @author hp
+ * @author ZhongFang
  *
  */
 public class DateSet {
-	private ArrayList<AnalReview> testSet = new ArrayList<AnalReview>();// 测试集
-	private ArrayList<ArrayList<AnalReview>> diffCateTrainSet;// 不同类别的训练集
-	private ArrayList<AnalReview> allTrainSet;
+	/**
+	 * 分成了k份的所有数据集，用于交叉验证
+	 */
 	private ArrayList<ArrayList<AnalReview>> kLists;// 将所有数据集分为k个部分
 
 	/**
@@ -44,42 +44,6 @@ public class DateSet {
 			}
 		}
 		analReview.setFeatureVector(feVec);
-	}
-
-	private void genEmFtVecOfAReview(AnalReview analReview,
-			ArrayList<String> emoFeatures, ArrayList<String> negWords,
-			boolean neg_on, boolean dgr_on) {
-		int[] emoFeVec = new int[emoFeatures.size()];
-		HashMap<String, Integer> freTemp = analReview.getFrequency();
-
-		for (int i = 0; i < emoFeVec.length; i++) {
-			String emofeat = emoFeatures.get(i);
-			int Neg_times = 0;// 否定次数
-			if (freTemp.containsKey(emofeat)) {// 如果该评论有情感词，则找到对应句子
-				ArrayList<String[]> sentsWords = analReview.getWordOfSentence();
-				for (int j = 0; j < sentsWords.size(); j++) {
-					String[] sentenceWord = sentsWords.get(j);
-					for (int k = 0; k < sentenceWord.length; k++) {
-						String word = sentenceWord[k];
-						if (emoFeatures.contains(word)) {// 找到这个情感词,遍历前面的词，看是否是否定词
-							for (int l = 0; l < k; l++) {
-								if (negWords.contains(sentenceWord[l])) {
-									Neg_times++;
-								}
-							}
-						}
-					}
-
-				}
-				if (Neg_times % 2 == 1) {// 如果是奇数次，则将特征设置为-5
-					emoFeVec[i] = 5;
-				} else {
-					emoFeVec[i] = -5;
-				}
-			} else {
-				emoFeVec[i] = 0;
-			}
-		}
 	}
 
 	/**
@@ -154,120 +118,6 @@ public class DateSet {
 			}
 			kLists.add(tmp);
 		}
-	}
-
-	/**
-	 * 按百分比随机选择训练集
-	 * 
-	 * @param b
-	 *            预测分类的数组
-	 * @param percent
-	 *            训练集占所有数据集的百分比
-	 * @param reviews
-	 *            所有的数据集
-	 */
-	public void seleTrain(int b[], double percent, ArrayList<AnalReview> reviews) {
-		int totalSize = reviews.size();
-		int cateNum = b.length;
-		int trainSize = (int) (totalSize * percent);
-		reviews = genRandAnalReviews(reviews);// 打乱评论的顺序
-		System.out.println(reviews.size());
-		diffCateTrainSet = new ArrayList<ArrayList<AnalReview>>(cateNum);
-		allTrainSet = new ArrayList<AnalReview>(trainSize);
-
-		for (int i = 0; i < cateNum; i++) {
-			diffCateTrainSet.add(new ArrayList<AnalReview>());
-		}
-		int i = 0;
-		int currentSize = 0;
-		for (; currentSize < trainSize && i < totalSize; i++) {// 前面指定百分比且指定类别的评论加入到训练集
-			AnalReview review = reviews.get(i);
-			boolean added = false;
-			for (int j = 0; j < cateNum; j++) {// 判断属于哪个类别，加入到对应的集合中
-				if (review.getLevel() == b[j]) {
-					diffCateTrainSet.get(j).add(review);
-					allTrainSet.add(review);
-					currentSize++;
-					added = true;
-				}
-			}
-			if (!added)
-				testSet.add(review);
-		}
-
-		for (; i < totalSize; i++) {// 后面剩下的加入测试集
-			testSet.add(reviews.get(i));
-		}
-		System.out.println("训练集大小：" + allTrainSet.size());
-		System.out.println("测试集大小：" + testSet.size());
-	}
-
-	/**
-	 * @param a
-	 *            要选择的类别对应的星级
-	 * @param numOfEach
-	 *            每个类别的个数
-	 * @param reviews
-	 *            从给定的评论集合选择
-	 */
-	public void seleTrain(int a[], int numOfEach, ArrayList<AnalReview> reviews) {
-		int n = a.length;
-		reviews = genRandAnalReviews(reviews);// 打乱评论的顺序
-
-		Map<Integer, Integer> cateLevel2cateNum = new HashMap<Integer, Integer>(
-				n);
-		allTrainSet = new ArrayList<AnalReview>(numOfEach * n);
-		diffCateTrainSet = new ArrayList<ArrayList<AnalReview>>(n);
-		for (int i = 0; i < n; i++) {
-			cateLevel2cateNum.put(a[i], i);
-			diffCateTrainSet.add(new ArrayList<AnalReview>(numOfEach));
-		}
-		for (AnalReview analReview : reviews) {
-			int level = analReview.getLevel();
-			int index = 0;
-			if (cateLevel2cateNum.containsKey(level)) {
-				index = cateLevel2cateNum.get(level);
-				if (diffCateTrainSet.get(index).size() < numOfEach) {
-					diffCateTrainSet.get(index).add(analReview);
-					allTrainSet.add(analReview);
-				} else {
-					testSet.add(analReview);
-				}
-			} else {
-				testSet.add(analReview);
-			}
-		}
-		System.out.println("训练集大小：" + allTrainSet.size());
-		System.out.println("测试集大小：" + testSet.size());
-	}
-
-	/**
-	 * @return the diffCateTrainSet 不同类别的训练集
-	 */
-	public ArrayList<ArrayList<AnalReview>> getDiffCateTrainSet() {
-		return diffCateTrainSet;
-	}
-
-	/**
-	 * @return the testSet 测试集
-	 */
-	public ArrayList<AnalReview> getTestSet() {
-		return testSet;
-	}
-
-	/**
-	 * @param testSet
-	 *            要设置的测试集
-	 */
-	public void setTestSet(ArrayList<AnalReview> testSet) {
-		this.testSet = testSet;
-	}
-
-	/**
-	 * @return the allTrainSet 所有训练集（不分类别）
-	 */
-	public ArrayList<AnalReview> getAllTrainSet() {
-		return allTrainSet;
 	}
 
 	/**

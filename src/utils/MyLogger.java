@@ -12,7 +12,7 @@ public class MyLogger {
 
 	private Logger logger;
 	public MyLogger(String filename) {
-		logger = Logger.getLogger(filename);
+		logger = Logger.getLogger("output/"+filename);
 
 		FileAppender appender = null;
 		String pattern="%m";

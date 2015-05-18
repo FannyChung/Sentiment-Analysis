@@ -19,20 +19,17 @@ import utils.LoadEmotionRelated;
 import utils.LoadStopWords;
 import utils.MyLogger;
 
+/**
+ * @author ZhongFang
+ *
+ */
 public class Controller {
 	private AnalysisText textAnal = new AnalysisText();
 	private Feature feature;
 	private DateSet dateSet = new DateSet();
 	private Model model;
 	private int a[] = { 0, 1 };
-	// {0,1}
-	// { 1, 2, 3, 4, 5 }
 	private int b[][] = { { 0 }, { 1 } };
-	// { { 1 }, { 2 }, { 3 },{ 4 }, { 5 } } 0.566489925768823
-	// { { 1,2 }, { 3}, { 4, 5 } } 0.7654294803817603
-	// {{1,2},{3,4},{5}} 0.6294803817603394
-	// {{1,2,3},{4,5}}
-	// {{0},{1}}
 	private ArrayList<String> features;
 	private LoadEmotionRelated loadEmotionRelated = new LoadEmotionRelated();
 	private LoadStopWords loadStopWords = new LoadStopWords();
@@ -46,15 +43,20 @@ public class Controller {
 	private int IG_Num;// 设置的信息增益过滤后的大小
 
 	/**
-	 * 打开excel文件
+	 * 读取并打开excel文件
+	 * 
+	 * @param inFile
+	 *            评论信息所在文件
+	 * @param outFile
+	 *            输出的各种信息所在的文件
 	 */
-	public void openExcel() {
+	public void openExcel(String inFile, String outFile) {
 		InputStream stream;
 		try {
-			stream = new FileInputStream("tan.xls");// t.xls是收集到的评论信息所在文件
+			stream = new FileInputStream(inFile);
 			Workbook wb = Workbook.getWorkbook(stream);
 			dataSheetNum = wb.getNumberOfSheets();
-			book = Workbook.createWorkbook(new File("result.xls"), wb);
+			book = Workbook.createWorkbook(new File(outFile), wb);
 			sheetNum = dataSheetNum;
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
@@ -81,11 +83,11 @@ public class Controller {
 	}
 
 	/**
-	 * 分词
+	 * 分词并输出相关信息
 	 */
 	public void wordSegmentation() {
-		getTextAnal().setAllEmotionRelatedWords(loadEmotionRelated
-				.getAllEmotionRelated());
+		getTextAnal().setAllEmotionRelatedWords(
+				loadEmotionRelated.getAllEmotionRelated());
 		getTextAnal().initNlpri();
 		try {
 			WritableSheet sheet;
@@ -116,9 +118,9 @@ public class Controller {
 		model.analReviews(getTextAnal().getReviews());
 
 		feature = new Feature();
-		feature.sortByFreq(model.getFrequency());
+		feature.sortByFreq(model.getFrequency());// 按词频从小到大排序
 		// featureSelection.delLessThan(3);// 删除出现低于3次的词
-		// featureSelection.delTopK(20);
+		// featureSelection.delTopK(20);//删除词频最高的20个词
 		features = feature.getFeatureString();
 		System.out.println("initial featureSize: " + features.size());
 
@@ -139,6 +141,7 @@ public class Controller {
 				feature.writeFeature(sheet);
 			}
 
+			// 统计类概率和特征在各个类中的概率，用于IG过滤和DF过滤
 			model.separateReviewsByLevel(getTextAnal().getReviews(), b);
 			model.countFeatureInCates(features);// 还没有向量化
 
@@ -154,8 +157,7 @@ public class Controller {
 
 			// 信息增益过滤
 			if (IG_on) {
-				features = feature.IGSelection(features, IG_Num,
-						model);
+				features = feature.IGSelection(features, IG_Num, model);
 				System.out.println("after IG: featureSize " + features.size());
 
 				sheet = book.createSheet("IG特征筛选后", sheetNum++);
@@ -166,16 +168,23 @@ public class Controller {
 			e.printStackTrace();
 		}
 
+		// 对所有评论文本进行向量化
 		dateSet.genFeatureVectors(getTextAnal().getReviews(), features);
 	}
 
 	/**
-	 * 选择训练集
+	 * 分离训练集和测试集
 	 */
 	public void seleTrainSet(int k) {
 		dateSet.seleTrain(k, getTextAnal().getReviews());
 	}
 
+	/**
+	 * 根据指定的训练集进行训练
+	 * 
+	 * @param trainData
+	 *            指定的训练集
+	 */
 	public void training(ArrayList<AnalReview> trainData) {
 		model.separateReviewsByLevel(trainData, b);
 		// countNum.countFeatureInCates(features);
@@ -185,22 +194,31 @@ public class Controller {
 		model.calcPfc();
 	}
 
+	/**
+	 * 对指定的测试集进行预测
+	 * 
+	 * @param k
+	 *            第k次预测
+	 * @param testData
+	 *            指定的测试集
+	 * @return 由本次预测结果的precision、recall、f1、accuracy组成的数组
+	 */
 	public double[] predict(int k, ArrayList<AnalReview> testData) {
-		Predict predict = new Predict(model);
+		Prediction prediction = new Prediction(model);
 		WritableSheet sheet;
 		// ArrayList<Integer> results = predict.predictRevs(testData, features);
-		ArrayList<Integer> results = predict.predictRevs(testData);// 向量化后
+		ArrayList<Integer> results = prediction.predictRevs(testData);// 向量化后
 
 		try {
 			sheet = book.createSheet("预测_测试集" + k, sheetNum++);
-			predict.writePredResult(testData, sheet, results, b);
+			prediction.writePredResult(testData, sheet, results, b);
 		} catch (RowsExceededException e) {
 			e.printStackTrace();
 		} catch (WriteException e) {
 			e.printStackTrace();
 		}
-		double[] prfa = predict.statisticalRate(k, a, b,
-				predict.genConfuMatrix(testData, results, a, b));
+		double[] prfa = prediction.statisticalRate(k, a, b,
+				prediction.genConfuMatrix(testData, results, a, b));
 		return prfa;
 	}
 
@@ -236,12 +254,64 @@ public class Controller {
 		IG_Num = iG_Num;
 	}
 
-
 	/**
 	 * @return the trainSet
 	 */
 	public DateSet getDataSet() {
 		return dateSet;
+	}
+
+	/**
+	 * @return the textAnal
+	 */
+	public AnalysisText getTextAnal() {
+		return textAnal;
+	}
+
+	/**
+	 * @param textAnal
+	 *            the textAnal to set
+	 */
+	public void setTextAnal(AnalysisText textAnal) {
+		this.textAnal = textAnal;
+	}
+
+	/**
+	 * @param a
+	 *            the a to set
+	 */
+	public void setA(int[] a) {
+		this.a = a;
+	}
+
+	/**
+	 * @param b
+	 *            the b to set
+	 */
+	public void setB(int[][] b) {
+		this.b = b;
+	}
+
+	/**
+	 * @return the feature
+	 */
+	public Feature getFeature() {
+		return feature;
+	}
+
+	/**
+	 * @return the model
+	 */
+	public Model getModel() {
+		return model;
+	}
+
+	/**
+	 * @param model
+	 *            the model to set
+	 */
+	public void setModel(Model model) {
+		this.model = model;
 	}
 
 	public static void main(String[] args) {
@@ -250,7 +320,7 @@ public class Controller {
 		for (int p = 0; p < repeatTimes; p++) {
 			long a = System.currentTimeMillis();
 			Controller controller = new Controller();
-			controller.openExcel();
+			controller.openExcel("tan.xls", "result.xls");
 
 			controller.setStop_on(true);// 停用词
 			controller.setDF_on(false);// DF
@@ -272,8 +342,8 @@ public class Controller {
 				for (int j = 0; j < k; j++) {
 					if (i == j)
 						continue;
-					trainAnalReviews.addAll(controller.getDataSet()
-							.getkLists().get(j));
+					trainAnalReviews.addAll(controller.getDataSet().getkLists()
+							.get(j));
 				}
 				controller.training(trainAnalReviews);
 				double[] prfa = controller.predict(i, controller.getDataSet()
@@ -304,54 +374,5 @@ public class Controller {
 			System.out.print(total[i] / repeatTimes + "\t");
 		}
 
-	}
-
-	/**
-	 * @return the textAnal
-	 */
-	public AnalysisText getTextAnal() {
-		return textAnal;
-	}
-
-	/**
-	 * @param textAnal the textAnal to set
-	 */
-	public void setTextAnal(AnalysisText textAnal) {
-		this.textAnal = textAnal;
-	}
-
-	/**
-	 * @param a the a to set
-	 */
-	public void setA(int[] a) {
-		this.a = a;
-	}
-
-	/**
-	 * @param b the b to set
-	 */
-	public void setB(int[][] b) {
-		this.b = b;
-	}
-
-	/**
-	 * @return the feature
-	 */
-	public Feature getFeature() {
-		return feature;
-	}
-
-	/**
-	 * @return the model
-	 */
-	public Model getModel() {
-		return model;
-	}
-
-	/**
-	 * @param model the model to set
-	 */
-	public void setModel(Model model) {
-		this.model = model;
 	}
 }

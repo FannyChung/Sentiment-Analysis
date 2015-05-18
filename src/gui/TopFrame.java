@@ -10,13 +10,14 @@ import javax.swing.JFrame;
 import javax.swing.JTabbedPane;
 
 /**
+ * 最高层的界面
  * @author ZhongFang
  *
  */
 public class TopFrame extends JFrame {
 
 	/**
-	 * 
+	 * 构造函数，设置长宽、布置内容
 	 */
 	public TopFrame() {
 		JTabbedPane tabbedp = new JTabbedPane(JTabbedPane.TOP);
@@ -33,7 +34,7 @@ public class TopFrame extends JFrame {
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 	}
 
-	/**
+	/**运行顶层界面
 	 * @param args
 	 */
 	public static void main(String[] args) {
