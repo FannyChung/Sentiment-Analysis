@@ -14,33 +14,70 @@ import jxl.write.WritableSheet;
 import jxl.write.WritableWorkbook;
 import jxl.write.WriteException;
 import jxl.write.biff.RowsExceededException;
-import utils.AnalReview;
 import utils.LoadEmotionRelated;
 import utils.LoadStopWords;
 import utils.MyLogger;
 
 /**
+ * 情感分析的总控制
+ * 
  * @author ZhongFang
  *
  */
 public class Controller {
-	private AnalysisText textAnal = new AnalysisText();
+	private AnalysisText analysisText = new AnalysisText();
 	private Feature feature;
-	private DateSet dateSet = new DateSet();
+	private DataSet dataSet = new DataSet();
 	private Model model;
-	private int a[] = { 0, 1 };
-	private int b[][] = { { 0 }, { 1 } };
+	/**
+	 * 标记的类别
+	 */
+	private int a[] ={0,1};// { 1, 2, 3, 4, 5 }
+	/**
+	 * 预测类别和标记类别的对应关系
+	 */
+	private int b[][] = {{0},{1}};//{ { 1, 2 }, { 3 }, { 4, 5 } };
+	/**
+	 * 特征词的字符串集合
+	 */
 	private ArrayList<String> features;
+	/**
+	 * 情感相关词
+	 */
 	private LoadEmotionRelated loadEmotionRelated = new LoadEmotionRelated();
+	/**
+	 * 停用词
+	 */
 	private LoadStopWords loadStopWords = new LoadStopWords();
+	/**
+	 * 待写入xls文件
+	 */
 	private WritableWorkbook book;
-	private int sheetNum;// 当前表单编号
+	/**
+	 * 待写入文件的当前表单编号
+	 */
+	private int sheetNum;
+	/**
+	 * 读取的表格文件的已有表单数目
+	 */
 	private int dataSheetNum;
 
-	private boolean DF_on;// 是否使用DF来过滤特征
-	private boolean Stop_on;// 是否使用停用词过滤
-	private boolean IG_on;// 是否使用信息增益过滤
-	private int IG_Num;// 设置的信息增益过滤后的大小
+	/**
+	 * 是否使用DF来过滤特征
+	 */
+	private boolean DF_on;
+	/**
+	 * 是否使用停用词过滤
+	 */
+	private boolean Stop_on;
+	/**
+	 * 是否使用信息增益过滤
+	 */
+	private boolean IG_on;
+	/**
+	 * 设置的信息增益过滤后的大小
+	 */
+	private int IG_Num;
 
 	/**
 	 * 读取并打开excel文件
@@ -86,27 +123,27 @@ public class Controller {
 	 * 分词并输出相关信息
 	 */
 	public void wordSegmentation() {
-		getTextAnal().setAllEmotionRelatedWords(
+		getAnalysisText().setAllEmotionRelatedWords(
 				loadEmotionRelated.getAllEmotionRelated());
-		getTextAnal().initNlpri();
+		getAnalysisText().initNlpri();
 		try {
 			WritableSheet sheet;
 			// 读表格中的信息
 			for (int i = 0; i < dataSheetNum; i++) {
 				sheet = book.getSheet(i);
-				getTextAnal().dealSheetRev(sheet);
+				getAnalysisText().dealSheetRev(sheet);
 			}
 			// test.printRes();
 
 			// 写每条评论的词频和星级等信息
 			sheet = book.createSheet("所有评论", sheetNum++);
-			getTextAnal().writeReviews(sheet, getTextAnal().getReviews());
+			getAnalysisText().writeReviews(sheet, getAnalysisText().getReviews());
 		} catch (RowsExceededException e) {
 			e.printStackTrace();
 		} catch (WriteException e) {
 			e.printStackTrace();
 		}
-		getTextAnal().exitNlpir();
+		getAnalysisText().exitNlpir();
 	}
 
 	/**
@@ -115,13 +152,13 @@ public class Controller {
 	public void featureSel() {
 		WritableSheet sheet;
 		model = new Model();
-		model.analReviews(getTextAnal().getReviews());
+		model.analReviews(getAnalysisText().getReviews());
 
 		feature = new Feature();
 		feature.sortByFreq(model.getFrequency());// 按词频从小到大排序
 		// featureSelection.delLessThan(3);// 删除出现低于3次的词
 		// featureSelection.delTopK(20);//删除词频最高的20个词
-		features = feature.getFeatureString();
+		features = feature.getFeatureStrings();
 		System.out.println("initial featureSize: " + features.size());
 
 		try {
@@ -142,14 +179,14 @@ public class Controller {
 			}
 
 			// 统计类概率和特征在各个类中的概率，用于IG过滤和DF过滤
-			model.separateReviewsByLevel(getTextAnal().getReviews(), b);
+			model.separateReviewsByLevel(getAnalysisText().getReviews(), b);
 			model.countFeatureInCates(features);// 还没有向量化
 
 			// 文档频率过滤
 			if (DF_on) {
 				feature.removeByDF(model.getFeatureCount(), 3);
 				System.out.println("after DF: featureSize "
-						+ feature.getFeatureString().size());
+						+ feature.getFeatureStrings().size());
 
 				sheet = book.createSheet("DF特征筛选后", sheetNum++);
 				feature.writeFeature(sheet);
@@ -158,25 +195,27 @@ public class Controller {
 			// 信息增益过滤
 			if (IG_on) {
 				features = feature.IGSelection(features, IG_Num, model);
+				feature.setFeatureStrings(features);
+				feature.updateFeatFre();
 				System.out.println("after IG: featureSize " + features.size());
+				System.out.println(feature.getFeaturesFreq().size());
 
 				sheet = book.createSheet("IG特征筛选后", sheetNum++);
 				feature.writeFeature(sheet);
 			}
-
 		} catch (WriteException e) {
 			e.printStackTrace();
 		}
 
 		// 对所有评论文本进行向量化
-		dateSet.genFeatureVectors(getTextAnal().getReviews(), features);
+		dataSet.genFeatureVectors(getAnalysisText().getReviews(), features);
 	}
 
 	/**
 	 * 分离训练集和测试集
 	 */
 	public void seleTrainSet(int k) {
-		dateSet.seleTrain(k, getTextAnal().getReviews());
+		dataSet.seleTrain(k, getAnalysisText().getReviews());
 	}
 
 	/**
@@ -187,7 +226,6 @@ public class Controller {
 	 */
 	public void training(ArrayList<AnalReview> trainData) {
 		model.separateReviewsByLevel(trainData, b);
-		// countNum.countFeatureInCates(features);
 		model.countFeatureInCates();// 向量化后的计数
 
 		model.calcPc();
@@ -206,7 +244,6 @@ public class Controller {
 	public double[] predict(int k, ArrayList<AnalReview> testData) {
 		Prediction prediction = new Prediction(model);
 		WritableSheet sheet;
-		// ArrayList<Integer> results = predict.predictRevs(testData, features);
 		ArrayList<Integer> results = prediction.predictRevs(testData);// 向量化后
 
 		try {
@@ -257,23 +294,8 @@ public class Controller {
 	/**
 	 * @return the trainSet
 	 */
-	public DateSet getDataSet() {
-		return dateSet;
-	}
-
-	/**
-	 * @return the textAnal
-	 */
-	public AnalysisText getTextAnal() {
-		return textAnal;
-	}
-
-	/**
-	 * @param textAnal
-	 *            the textAnal to set
-	 */
-	public void setTextAnal(AnalysisText textAnal) {
-		this.textAnal = textAnal;
+	public DataSet getDataSet() {
+		return dataSet;
 	}
 
 	/**
@@ -314,8 +336,15 @@ public class Controller {
 		this.model = model;
 	}
 
+	/**
+	 * @return the analysisText
+	 */
+	public AnalysisText getAnalysisText() {
+		return analysisText;
+	}
+
 	public static void main(String[] args) {
-		int repeatTimes = 5;
+		int repeatTimes = 1;
 		double total[] = new double[5];
 		for (int p = 0; p < repeatTimes; p++) {
 			long a = System.currentTimeMillis();
@@ -324,7 +353,7 @@ public class Controller {
 
 			controller.setStop_on(true);// 停用词
 			controller.setDF_on(false);// DF
-			controller.setIG_on(false);// IG
+			controller.setIG_on(true);// IG
 			controller.setIG_Num(2000);
 
 			controller.wordSegmentation();
@@ -337,6 +366,7 @@ public class Controller {
 			double sumF1 = 0;
 			double sumAccu = 0;
 			for (int i = 0; i < k; i++) {
+				//第i个集合作测试集，其他k-1个集合作训练集
 				ArrayList<AnalReview> trainAnalReviews = new ArrayList<AnalReview>(
 						k - 1);
 				for (int j = 0; j < k; j++) {
@@ -361,6 +391,7 @@ public class Controller {
 					+ decimalFormat.format(sumF1 / k * 100) + "%\t"
 					+ decimalFormat.format(sumAccu / k * 100) + "%\t");
 
+			
 			controller.closeExcel();
 			logger.info((System.currentTimeMillis() - a) + " ms ");
 			total[0] += (sumPre / k);

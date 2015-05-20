@@ -67,7 +67,7 @@ public class Feature {
 		ArrayList<Integer> cateCount = model.getDiffCateNum();// 不同类别的文本个数
 		ArrayList<ArrayList<Integer>> countOfWordsDifCate = model
 				.getCountOfWordsDifCate();// 不同类别下不同特征的出现次数
-		int totalSize = model.getTotalSize();
+		int totalSize = model.getTotalSize();// 总共评论个数
 
 		// 计算每个特征的IG
 		Map<String, Double> featureIG = new HashMap<String, Double>(beforeSize);// 不同特征的IG值
@@ -253,15 +253,18 @@ public class Feature {
 	/**
 	 * @return 特征的字符串集合
 	 */
-	public ArrayList<String> getFeatureString() {
+	public ArrayList<String> getFeatureStrings() {
 		return featureStrings;
 	}
 
-	/**设置特征的字符串集合
+
+	/**
+	 * 设置特征的字符串集合
+	 * 
 	 * @param featureStrings
 	 *            特征的字符串集合
 	 */
-	public void setFeatures(ArrayList<String> featureStrings) {
+	public void setFeatureStrings(ArrayList<String> featureStrings) {
 		this.featureStrings = featureStrings;
 	}
 }

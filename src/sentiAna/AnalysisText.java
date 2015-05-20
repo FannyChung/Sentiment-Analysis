@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import utils.AnalReview;
 import utils.NlpirTest.CLibrary;
 import jxl.Sheet;
 import jxl.write.Label;
@@ -81,10 +80,6 @@ public class AnalysisText {
 		return outStrBuf.toString();
 	}
 
-	private Integer addOne(Integer value) {
-		return value + 1;
-	}
-
 	/**
 	 * 对一条评论字符进行分词处理 统计评论的字数、词数
 	 * 
@@ -113,7 +108,7 @@ public class AnalysisText {
 			wordOfSentence.add(analText);
 			for (String string : analText) {
 				review.getFrequency().merge(string, 1,
-						(value, newValue) -> addOne(value));
+						(value, newValue) -> (value + 1));
 				charsCount += string.length();// 统计字数
 				wordsCount++;// 统计词数
 			}
@@ -233,7 +228,6 @@ public class AnalysisText {
 			e.printStackTrace();
 		}
 		reivewText = reivewText.replaceAll("[^\u4e00-\u9fa5?!？！]+",// 只保留中英文数字和?!
-																	// 0-9a-zA-Z
 				" ");// 去除特殊字符，保留感叹号和问号
 		reivewText = reivewText.replaceAll("\\s+", " ");
 		String nativeBytes = CLibrary.Instance.NLPIR_ParagraphProcess(

@@ -36,11 +36,11 @@ import javax.swing.table.TableRowSorter;
 import jxl.write.WritableSheet;
 import jxl.write.WriteException;
 import jxl.write.biff.RowsExceededException;
+import sentiAna.AnalReview;
 import sentiAna.AnalysisText;
 import sentiAna.Controller;
 import sentiAna.Prediction;
-import spider.FileDealer;
-import utils.AnalReview;
+import utils.FileDealer;
 import utils.LoadEmotionRelated;
 import utils.MyLogger;
 
@@ -240,7 +240,7 @@ public class SentiPan extends JPanel implements ActionListener {
 		controller.setB(new int[][] { { 1 }, { 2 }, { 3 }, { 4 }, { 5 } });// 设置文本待分类的星级为五类
 		controller.setStop_on(true);// 停用词
 		controller.setDF_on(false);// DF
-		controller.setIG_on(false);// IG
+		controller.setIG_on(true);// IG
 		controller.setIG_Num(2000);
 
 		controller.openExcel("t.xls", "out.xls");// 打开输入、输出文件
@@ -250,8 +250,8 @@ public class SentiPan extends JPanel implements ActionListener {
 
 		// 分成五类
 		controller.featureSel();
-		controller.training(controller.getTextAnal().getReviews());
-		wirteInfo(controller.getFeature().getFeatureString(), controller
+		controller.training(controller.getAnalysisText().getReviews());
+		wirteInfo(controller.getFeature().getFeatureStrings(), controller
 				.getModel().getpOfWordInDifCate(), controller.getModel()
 				.getpOfACate(), "Featrue_5.txt", "Featrue_5_P.txt",
 				"Cate_5_p.txt");
@@ -259,8 +259,8 @@ public class SentiPan extends JPanel implements ActionListener {
 		// 分成三类
 		controller.setB(new int[][] { { 1, 2 }, { 3 }, { 4, 5 } });// 设置文本待分类的星级为三类
 		controller.featureSel();
-		controller.training(controller.getTextAnal().getReviews());
-		wirteInfo(controller.getFeature().getFeatureString(), controller
+		controller.training(controller.getAnalysisText().getReviews());
+		wirteInfo(controller.getFeature().getFeatureStrings(), controller
 				.getModel().getpOfWordInDifCate(), controller.getModel()
 				.getpOfACate(), "Featrue_3.txt", "Featrue_3_P.txt",
 				"Cate_3_p.txt");
@@ -413,7 +413,7 @@ public class SentiPan extends JPanel implements ActionListener {
 					"请确认训练文本已保存到t.xls且第一、二列分别为文本、星级，按确认键继续", "请确认",
 					JOptionPane.OK_CANCEL_OPTION) == JOptionPane.YES_OPTION) {
 				train();
-				JOptionPane.showMessageDialog(null, "已保存到excel文件result.xls",
+				JOptionPane.showMessageDialog(null, "已保存到excel文件out.xls",
 						"重新训练成功", JOptionPane.ERROR_MESSAGE);
 			}
 		} else if (e.getSource() == filtButton) { // 从表格的数据中筛选信息，留下包含指定字符串并且是指定星级的评论
@@ -489,6 +489,7 @@ public class SentiPan extends JPanel implements ActionListener {
 					table.setRowSorter(sorter);
 					table.repaint();
 					table.updateUI();
+					JOptionPane.showMessageDialog(null, "结果保存已到pre_result.xls");
 				}
 			}
 			analysisText.exitNlpir();

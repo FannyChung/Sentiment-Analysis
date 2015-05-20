@@ -11,7 +11,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
-import utils.AnalReview;
 import utils.MyLogger;
 import jxl.write.Label;
 import jxl.write.WritableSheet;
@@ -28,20 +27,20 @@ public class Model {
 	/**
 	 * 不同类别的训练集
 	 */
-	private ArrayList<ArrayList<AnalReview>> diffCateDataSet;
+	private ArrayList<ArrayList<AnalReview>> diffCateDataSet;// 外层是预测类别，内层是评论集合
 	/**
 	 * 不同类别的文本个数
 	 */
 	private ArrayList<Integer> diffCateNum;
 
 	/**
-	 * 该特征在所有文档中的出现次数
+	 * 特征在所有文档中的出现次数
 	 */
 	private ArrayList<Integer> featureCount;
 	/**
 	 * 词在不同类别中的计数
 	 */
-	private ArrayList<ArrayList<Integer>> countOfWordsDifCate;
+	private ArrayList<ArrayList<Integer>> countOfWordsDifCate;// 外层是类别，内层是特征词
 	/**
 	 * 数据集的总大小
 	 */
@@ -50,54 +49,53 @@ public class Model {
 	 * 特征词及其词频信息
 	 */
 	private HashMap<String, Integer> frequency;
-
-	/**
-	 * 训练集大小
-	 */
-	private int sampleSize;
 	/**
 	 * 每个特征在各个类中的概率P(f|c)
 	 */
-	private ArrayList<ArrayList<Double>> pOfWordInDifCate;
+	private ArrayList<ArrayList<Double>> pOfWordInDifCate;// 外层是类别，内层是特征
 	/**
 	 * 每个类的概率P(c)
 	 */
 	private ArrayList<Double> pOfACate;
+
+	private MyLogger logger = new MyLogger("Pfc.txt");
+	private MyLogger logger2 = new MyLogger("不同特征的文本个数.txt");
+	private MyLogger logger1 = new MyLogger("不同类别的文本个数.txt");
+
+
 
 	/**
 	 * 将所有类别的评论按星级分类，统计不同类别的文档数
 	 * 
 	 * @param reviews
 	 *            所有的评论集合
-	 * @param reviewLevels
+	 * @param predictLevels
 	 *            分类结果与原来的评价星级的对应数组
 	 */
 	public void separateReviewsByLevel(ArrayList<AnalReview> reviews,
-			int reviewLevels[][]) {
-		totalSize = reviews.size();
-		int cateNum = reviewLevels.length;
-		diffCateDataSet = new ArrayList<ArrayList<AnalReview>>(cateNum);
-		for (int i = 0; i < reviewLevels.length; i++) {
+			int predictLevels[][]) {
+		totalSize = reviews.size();// 数据集合的总大小
+		int cateNum = predictLevels.length;// 预测类别的个数，可为3或5
+		diffCateDataSet = new ArrayList<ArrayList<AnalReview>>(cateNum);// 不同类别的训练集
+		for (int i = 0; i < predictLevels.length; i++) {// 初始化
 			diffCateDataSet.add(new ArrayList<AnalReview>());
 		}
-		for (AnalReview analReview : reviews) {
-			int level = analReview.getLevel();
-			for (int i = 0; i < reviewLevels.length; i++) {
-				for (int j = 0; j < reviewLevels[i].length; j++) {
-					if (reviewLevels[i][j] == level) {
+		for (AnalReview analReview : reviews) {// 根据评论的标记类别和预测类别的对应关系将评论放入不同的diffCateDataSet
+			int level = analReview.getLevel();// 标记类别
+			for (int i = 0; i < predictLevels.length; i++) {
+				for (int j = 0; j < predictLevels[i].length; j++) {
+					if (predictLevels[i][j] == level) {// 评论的标记类别属于该预测类别，则把评论放入对应的集合
 						diffCateDataSet.get(i).add(analReview);
 					}
 				}
-
 			}
 		}
 		// 计算不同类别下的文档个数
 		int n = diffCateDataSet.size();// 类别个数
-		diffCateNum = new ArrayList<Integer>(n);
+		diffCateNum = new ArrayList<Integer>(n);// 不同类别的文档个数
 		for (ArrayList<AnalReview> arrayList : diffCateDataSet) {// size=每个类别中的文档数
 			diffCateNum.add(arrayList.size());
 		}
-		MyLogger logger1 = new MyLogger("不同类别的文本个数.txt");
 		logger1.info(diffCateNum.toString() + "\r\n\r\n\r\n");
 	}
 
@@ -114,8 +112,6 @@ public class Model {
 			ArrayList<AnalReview> reviewsOfACate) {
 		int n = 0;
 		for (AnalReview analReview : reviewsOfACate) {
-			// n += (analReview.getFrequency().getOrDefault(feature,
-			// 0));//该文档出现了该词，则+在该词在文档的词频;否则+0
 			if (analReview.getFrequency().containsKey(feature))// 该文档出现了该词，则该类别的特征出现文档数+1
 				n++;
 		}
@@ -132,11 +128,13 @@ public class Model {
 	 */
 	public void countFeatureInCates(ArrayList<String> features) {
 		int n = diffCateDataSet.size();// 类别数
-		countOfWordsDifCate = new ArrayList<ArrayList<Integer>>(n);
-		for (ArrayList<AnalReview> arrayList : diffCateDataSet) {
+		countOfWordsDifCate = new ArrayList<ArrayList<Integer>>(n);// 词在不同类别中的计数
+
+		// 统计每个特征词在不同类别中出现的次数
+		for (ArrayList<AnalReview> arrayList : diffCateDataSet) {// 每个类别的数据集
 			ArrayList<Integer> wordOfAcate = new ArrayList<Integer>(
-					features.size());// 一个类别的特征出现的文档个数
-			for (String string : features) {
+					features.size());// 一个类别中所有特征出现的文档个数
+			for (String string : features) {// 每个特征词
 				int count = calcNumOfWordACate(string, arrayList);
 				wordOfAcate.add(count);
 			}
@@ -145,28 +143,26 @@ public class Model {
 		// 统计所有特征出现的总次数
 		int f = countOfWordsDifCate.get(0).size();// 特征数
 		featureCount = new ArrayList<Integer>(f);
-		MyLogger logger2 = new MyLogger("不同特征的文本个数.txt");
 		for (int i = 0; i < f; i++) {
 			int sum = 0;
 			for (int j = 0; j < n; j++) {
 				sum += countOfWordsDifCate.get(j).get(i);
 			}
-			logger2.info(features.get(i) + "\t" + sum + "\r\n");
 			featureCount.add(sum);
 		}
-		logger2.info("-----------------------------------------------------------------------------\r\n");
 	}
 
 	/**
-	 * 统计训练集的不同类别中，所有词出现的文档数 Nc,f,用二维数组countOfWordsDifCate表示，
+	 * 统计训练集的不同类别中，所有词出现的文档数 Nc,f,用二维数组countOfWordsDifCate表示；
+	 * 计算特征在所有文档中的出现次数，用featureCount表示
 	 * 
-	 * 向量化之后使用
+	 * 文本向量化之后使用
 	 */
 	public void countFeatureInCates() {
 		int cateNum = diffCateDataSet.size();// 类别数
-		int featNum = diffCateDataSet.get(0).get(0).getFeatureVector().length;
-		featureCount = new ArrayList<Integer>(featNum);
-		countOfWordsDifCate = new ArrayList<ArrayList<Integer>>(cateNum);
+		int featNum = diffCateDataSet.get(0).get(0).getFeatureVector().length;// 特征数
+		featureCount = new ArrayList<Integer>(featNum);// 特征在所有文档中的出现次数
+		countOfWordsDifCate = new ArrayList<ArrayList<Integer>>(cateNum);// 词在不同类别中的计数
 		for (int i = 0; i < cateNum; i++) {
 			ArrayList<Integer> countOfWordsAcate = new ArrayList<Integer>(
 					featNum);
@@ -179,72 +175,29 @@ public class Model {
 		for (int i = 0; i < featNum; i++) {
 			featureCount.add(0);
 		}
-		int cateIndex = 0;
+		int cateIndex = 0;// 类别索引
 		for (ArrayList<AnalReview> reviews : diffCateDataSet) {// 同一类别的评论集合
 			for (AnalReview analReview : reviews) {// 每个评论
-				boolean[] feVec = analReview.getFeatureVector();
-				for (int featureIndex = 0; featureIndex < featNum; featureIndex++) {
+				boolean[] feVec = analReview.getFeatureVector();// 获取该评论的特征向量
+				for (int featureIndex = 0; featureIndex < featNum; featureIndex++) {// 对每个特征
 					boolean b = feVec[featureIndex];
-					if (b) {
+					if (b) {// 如果对应值为1
 						int bef = countOfWordsDifCate.get(cateIndex).get(
 								featureIndex);
 						countOfWordsDifCate.get(cateIndex).set(featureIndex,
-								bef + 1);
+								bef + 1);// 把对应的特征和类的文档计数+1
 						bef = featureCount.get(featureIndex);
-						featureCount.set(featureIndex, bef + 1);
+						featureCount.set(featureIndex, bef + 1);// 把对应的特征的文档计数加1
 					}
 				}
 			}
 			cateIndex++;
 		}
-	}
-
-	/**
-	 * 将所有的特征词在不同类别出现的次数写到表单中
-	 * 
-	 * @param sheet
-	 *            要写入的表单
-	 * @param features
-	 *            所有特征词
-	 * @throws RowsExceededException
-	 * @throws WriteException
-	 */
-	public void writeCount(WritableSheet sheet, ArrayList<String> features,
-			ArrayList<ArrayList<Double>> pOfWordInDifCate)
-			throws RowsExceededException, WriteException {
-		int i = 0;// 行数,i变化，为在同一行
-		int j = 0;
-		Label label;
-		for (String string : features) {
-			label = new Label(i, j, string);
-			sheet.addCell(label);
-			j++;
+		
+		for (Integer integer : featureCount) {
+			logger2.info( integer + "\r\n");
 		}
-		i = 1;
-		for (ArrayList<Integer> arrayList : countOfWordsDifCate) {
-			j = 0;
-			for (Integer integer : arrayList) {
-				label = new Label(i, j, integer.toString());
-				sheet.addCell(label);
-				j++;
-			}
-			i++;
-		}
-
-		i = 6;
-		for (ArrayList<Double> arrayList : pOfWordInDifCate) {
-			j = 0;
-			for (Double double1 : arrayList) {
-				label = new Label(i, j, double1.toString());
-				sheet.addCell(label);
-				j++;
-			}
-			i++;
-		}
-	}
-
-	private Integer add(Integer value, Integer addNum) {
-		return value + addNum;
+		logger2.info("----------------------------------------------------------\r\n");
 	}
 
 	/**
@@ -271,7 +224,7 @@ public class Model {
 				String string = entry.getKey();
 				Integer sfre = entry.getValue();
 				frequency.merge(string, sfre,
-						(value, newValue) -> add(value, sfre));
+						(value, newValue) -> (sfre + value));
 			}
 		}
 		System.out.println("wordsSum" + wordSum);
@@ -281,10 +234,44 @@ public class Model {
 	}
 
 	/**
+	 * 计算所有特征在所有类别中的概率P(f|c)
+	 * 
+	 */
+	public void calcPfc() {
+		int cateSize = countOfWordsDifCate.size();// 类别数
+		int featureSize = countOfWordsDifCate.get(0).size();// 特征数
+		pOfWordInDifCate = new ArrayList<ArrayList<Double>>(cateSize);// 所有类别下所有特征的P(f|c),二维数组，外面是类别，里面是特征词
+		for (int cateIndex = 0; cateIndex < cateSize; cateIndex++) {// 对于每个预测类别
+			logger.info("\r\n\r\n" + "c" + cateIndex + ":\r\n");
+			ArrayList<Double> resList = new ArrayList<Double>(featureSize);// 同一类别下所有特征的P(f|c)
+			ArrayList<Integer> tmpCounts = countOfWordsDifCate.get(cateIndex);// 所有特征出现在指定类别中的文档个数
+			int b = diffCateNum.get(cateIndex);// 指定类别的文档数
+			for (int featureIndex = 0; featureIndex < featureSize; featureIndex++) {// 每个特征
+				int a = tmpCounts.get(featureIndex);// 指定类别中的指定特征的文档数
+				double p = (double) (a + 1) / (b + 2);// 指定特征在指定类别下的条件概率
+				resList.add(p);
+				logger.info(p + "\r\n");
+			}
+			pOfWordInDifCate.add(resList);
+		}
+	}
+
+	/**
+	 * 计算P(c),一个类别的概率
+	 */
+	public void calcPc() {
+		int c = countOfWordsDifCate.size();// 类别数
+		pOfACate = new ArrayList<Double>(c);// 所有类别的概率
+		for (int i = 0; i < c; i++) {
+			double p = (double) (diffCateNum.get(i) + 1) / (totalSize + c);// 指定类别的概率
+			pOfACate.add(p);
+		}
+	}
+
+	/**
 	 * @return the featureCount 不同特征出现的文档个数
 	 */
 	public ArrayList<Integer> getFeatureCount() {
-
 		return featureCount;
 	}
 
@@ -302,6 +289,9 @@ public class Model {
 		return countOfWordsDifCate;
 	}
 
+	/**
+	 * @return 特征字符串集合
+	 */
 	public ArrayList<String> getFeatureString() {
 		ArrayList<String> result = new ArrayList<String>(frequency.size());
 		Iterator<Entry<String, Integer>> itr = frequency.entrySet().iterator();
@@ -313,12 +303,15 @@ public class Model {
 	}
 
 	/**
-	 * @return the totalSize
+	 * @return the totalSize 数据集总大小
 	 */
 	public int getTotalSize() {
 		return totalSize;
 	}
 
+	/**
+	 * @return 词和词频统计信息
+	 */
 	public HashMap<String, Integer> getFrequency() {
 		return frequency;
 	}
@@ -329,44 +322,6 @@ public class Model {
 	 */
 	public void setTotalSize(int totalSize) {
 		this.totalSize = totalSize;
-	}
-
-	/**
-	 * 计算所有特征在所有类别中的概率P(f|c)，形成矩阵
-	 * 
-	 * @param features
-	 */
-	public void calcPfc() {
-		int cateSize = countOfWordsDifCate.size();// 类别数
-		int featureSize = countOfWordsDifCate.get(0).size();// 特征数
-		MyLogger logger = new MyLogger("Pfc.txt");
-		pOfWordInDifCate = new ArrayList<ArrayList<Double>>(cateSize);// 二维数组，外面是类别，里面是特征词
-		for (int cateIndex = 0; cateIndex < cateSize; cateIndex++) {
-			logger.info("\r\n\r\n" + "c" + cateIndex + ":\r\n");
-			ArrayList<Double> resList = new ArrayList<Double>(featureSize);
-			ArrayList<Integer> tmpCounts = countOfWordsDifCate.get(cateIndex);// 所有特征出现在一个类别中的文档个数
-			for (int featureIndex = 0; featureIndex < featureSize; featureIndex++) {
-				int a = tmpCounts.get(featureIndex);
-				int b = diffCateNum.get(cateIndex);
-				double p = (double) (a + 1) / (b + 2);
-				resList.add(p);
-				logger.info(p + "\r\n");
-			}
-			// logger.info(resList.toString()+"\r\n");
-			pOfWordInDifCate.add(resList);
-		}
-	}
-
-	/**
-	 * 计算P(c),一个类别的概率
-	 */
-	public void calcPc() {
-		int c = countOfWordsDifCate.size();// 类别数
-		pOfACate = new ArrayList<Double>(c);
-		for (int i = 0; i < c; i++) {
-			double p = (double) (diffCateNum.get(i) + 1) / (sampleSize + c);
-			pOfACate.add(p);
-		}
 	}
 
 	/**

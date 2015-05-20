@@ -3,45 +3,37 @@ package spider;
 import java.util.Date;
 
 /**
- * ���۵����ݽṹ
+ * 爬取到的评论的数据结构
  *
  * @author Fanny
  */
 public class Review {
     /**
-     * �����ı�
+     * 评论文本
      */
     private String text;
     /**
-     * �û�����
-     */
-    private String userName;
-    /**
-     * ���۱���
+     * 评论标题
      */
     private String reTitle;
     /**
-     * �����Ǽ�
+     * 评论星级
      */
     private int level;
     /**
-     * ����ʱ��
+     * 评论时间
      */
     private Date time;
-    /**
-     * ���۲�Ʒ�Ŀ�ʽ
-     */
-    private String style;
 
     /**
-     * @return �����ı�
+     * @return 评论文本
      */
     public String getText() {
         return text;
     }
 
     /**
-     * ���������ı�
+     * 设置评论文本
      *
      * @param text
      */
@@ -50,25 +42,7 @@ public class Review {
     }
 
     /**
-     * ��ȡ�û�����
-     *
-     * @return
-     */
-    public String getUserName() {
-        return userName;
-    }
-
-    /**
-     * �����û�����
-     *
-     * @param userName
-     */
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
-
-    /**
-     * ��ȡ���۵ı���
+     * 获取评论的标题
      *
      * @return
      */
@@ -77,7 +51,7 @@ public class Review {
     }
 
     /**
-     * �������۵ı���
+     * 设置评论的标题
      *
      * @param reTitle
      */
@@ -86,7 +60,7 @@ public class Review {
     }
 
     /**
-     * �������۵ȼ�
+     * 设置评论等级
      *
      * @return
      */
@@ -95,7 +69,7 @@ public class Review {
     }
 
     /**
-     * ��ȡ���۵ȼ�
+     * 获取评论等级
      *
      * @param level
      */
@@ -104,7 +78,7 @@ public class Review {
     }
 
     /**
-     * ��ȡ���۵�ʱ��
+     * 获取评论的时间
      *
      * @return
      */
@@ -113,29 +87,11 @@ public class Review {
     }
 
     /**
-     * �������۵�ʱ��
+     * 设置评论的时间
      *
      * @param time
      */
     public void setTime(Date time) {
         this.time = time;
-    }
-
-    /**
-     * ��ȡ���۵���Ʒ��ʽ
-     *
-     * @return
-     */
-    public String getStyle() {
-        return style;
-    }
-
-    /**
-     * �������۵���Ʒ��ʽ
-     *
-     * @param style
-     */
-    public void setStyle(String style) {
-        this.style = style;
     }
 }

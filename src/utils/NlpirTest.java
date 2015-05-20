@@ -34,10 +34,7 @@ public class NlpirTest {
 		public String NLPIR_GetNewWords(String sLine);
 
 		// 从TXT文件中获取新词
-		public String NLPIR_GetFileNewWords(String sTextFile);// ,int
-																// nMaxKeyLimit,
-																// boolean
-																// bWeightOut
+		public String NLPIR_GetFileNewWords(String sTextFile);
 
 		public String NLPIR_GetLastErrorMsg();
 
@@ -54,9 +51,13 @@ public class NlpirTest {
 		return null;
 	}
 
+	/**
+	 * 从指定评论文本中获取新词，生成文件
+	 * 
+	 * @param args
+	 */
 	public static void main(String[] args) {
 		String argu = "./";
-		// String system_charset = "GBK";//GBK----0
 		int init_flag = CLibrary.Instance.NLPIR_Init(argu, 1, "0");
 		String nativeBytes;
 		if (0 == init_flag) {
@@ -70,14 +71,15 @@ public class NlpirTest {
 		String newWordsFileName = "新词.txt";
 
 		// 导入新词文件
-		String newWords = CLibrary.Instance.NLPIR_GetFileNewWords(allReviewsFileName);
+		String newWords = CLibrary.Instance
+				.NLPIR_GetFileNewWords(allReviewsFileName);
 		System.out.println(newWords);
 
 		String[] thewords = newWords.split("#");
 		System.out.println(thewords.length);
 		try {
-			FileOutputStream writerStream = new FileOutputStream("新词.txt",
-					false);
+			FileOutputStream writerStream = new FileOutputStream(
+					newWordsFileName, false);
 			OutputStreamWriter osw = (new OutputStreamWriter(writerStream,
 					"UTF-8"));
 			for (int i = 0; i < thewords.length; i++) {
@@ -88,17 +90,8 @@ public class NlpirTest {
 		} catch (Exception e) {
 
 		}
-
-		// 使用新词
-		String str = "新词.txt";
-		int nCount = CLibrary.Instance.NLPIR_ImportUserDict(str);
-		System.out.println("Import User Dictionary entries: " + nCount);
-
-		String reivewText = "先说手机，呵呵，充电端口坏了，不能充电，坑！！！作为备用机,充电器跟电池都是旧的，很明显，我另一个同学也是刚买的这个，都不一样他的都是新的，坑！！！商家态度，给呵呵了，一个电话都不敢打过来是几个意思啊！！！不是嫌退货麻烦，还有贴了公司的通行证，肯定退货了，第一次在亚马逊遇到这么坑的商家！！！！给跪了。 简直坑爹";
-		nativeBytes = CLibrary.Instance.NLPIR_ParagraphProcess(reivewText, 1);
-		System.out.println(nativeBytes);
 		CLibrary.Instance.NLPIR_Exit();
-		System.out.println("\r执行耗时 : " + (System.currentTimeMillis() - a)
+		System.out.println("执行耗时 : " + (System.currentTimeMillis() - a)
 				+ " ms ");
 	}
 }

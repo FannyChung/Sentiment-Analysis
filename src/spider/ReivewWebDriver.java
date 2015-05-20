@@ -3,6 +3,7 @@ package spider;
 import java.sql.Date;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Vector;
@@ -17,20 +18,28 @@ import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.htmlunit.HtmlUnitDriver;
 
+import utils.FileDealer;
 import utils.MyLogger;
 
 public class ReivewWebDriver {
+	/**
+	 * 
+	 */
 	private HtmlUnitDriver driver = new HtmlUnitDriver();
-	private static Vector<Review> reviews = new Vector<Review>(); // 只需要不断增加，所以使用vector
+	/**
+	 * 
+	 */
+	private ArrayList<Review> reviews = new ArrayList<Review>(); // 只需要不断增加，所以使用vector
 	private MyLogger logger = new MyLogger("商品名称和url.txt");
 	private int maxLoadTime = 3;
 
 	/**
-	 * 获取下一页评论 处理评论信息
+	 * 处理评论信息并获取下一页评论
 	 *
 	 * @param thisPage
+	 *            当前页
 	 */
-	public void nextPage(String thisPage) {
+	public void dealReviewPage(String thisPage) {
 		String nextp = null;
 		String reviewReg = "table[id=productReviews]>tbody>tr>td>div";// 评论信息的选择规则
 		String textReg = ".reviewText"; // 评论文本的选择规则
@@ -55,17 +64,14 @@ public class ReivewWebDriver {
 					.cssSelector(levelReg));// 获取星级信息
 			cString = levelElements.getText();
 			int level = cString.charAt(2) - '0';
-			// System.out.println(level);
 			review.setLevel(level);
 
 			WebElement titleEle = element.findElement(By.cssSelector(titleReg));
 			cString = titleEle.getText(); // 标题
-			// System.out.println(cString);
 			review.setReTitle(cString);
 
 			WebElement timeEle = element.findElement(By.cssSelector(timeReg));
 			cString = timeEle.getText(); // 获取日期
-			// System.out.println(cString);
 			SimpleDateFormat s = new SimpleDateFormat(dateFormat);
 			Date d = null;
 			try {
@@ -89,38 +95,38 @@ public class ReivewWebDriver {
 		}
 		nextp = element.getAttribute("href");
 		System.out.println("下一页\t" + nextp);
-		nextPage(nextp);
+
+		// 递归调用，分析下一页
+		dealReviewPage(nextp);
 	}
 
 	/**
-	 * 从商品页面跳转到评论页面
+	 * 从商品页面获取对应评论的第一页
 	 *
 	 * @param productPage
-	 * @return
+	 *            商品页面url
+	 * @return 对应评论的第一页
 	 */
 	public String getReviewPage(String productPage) {
-		driver.get(productPage);
-		// System.out.println("Page title is:" + driver.getTitle() + " url: "
-		// + driver.getCurrentUrl());
+		String reviewString = "div[id=revF]>div>a";// 商品页面中对应的评论页面的元素选择规则
+		HtmlUnitDriver driver = new HtmlUnitDriver();
+		driver.get(productPage);// 跳转到商品页面
 		logger.info("Page title is:" + driver.getTitle() + " url: "
 				+ driver.getCurrentUrl() + "\r\n");
-		WebElement element = driver
-				.findElementByCssSelector("div[id=revF]>div>a");
-		element.click();
-		String url = driver.getCurrentUrl();
-		// System.out.println("Page title is:" + driver.getTitle() + " url: "
-		// + url);
+		WebElement element = driver.findElementByCssSelector(reviewString);
+		element.click();// 点击评论链接，跳转到评论页面
+		String url = driver.getCurrentUrl();// 获取评论页面的url
+		driver.close();
 		return url;
 	}
 
 	/**
-	 * rewrite the get method, adding user defined log</BR>
 	 * 地址跳转方法，使用WebDriver原生get方法，加入失败重试的次数定义。
 	 * 
 	 * @param url
-	 *            the url you want to open.
+	 *            想要打开的网址
 	 * @param actionCount
-	 *            retry times when load timeout occuers.
+	 *            指定如果超时后的重试次数
 	 * @throws RuntimeException
 	 */
 	private void get(String url, int actionCount) {
@@ -138,26 +144,23 @@ public class ReivewWebDriver {
 	}
 
 	/**
-	 * rewrite the get method, adding user defined log
-	 * 地址跳转方法，使用WebDriver原生get方法，默认加载超重试【1】次。
+	 * 地址跳转。默认加载超重试1次。
 	 * 
 	 * @param url
-	 *            the url you want to open.
-	 * @throws RuntimeException
+	 *            想要打开的网址
 	 */
 	private void get(String url) {
 		get(url, 2);
 	}
 
 	/**
-	 * judge if the url has navigate and page load completed.
 	 * 跳转到指定的URL并且返回是否跳转完整的结果。
 	 * 
 	 * @param url
-	 *            the url you want to open.
+	 *            想要打开的网址
 	 * @param timeout
-	 *            the timeout for page load in seconds.
-	 * @return if page load completed.
+	 *            多少秒之后算超时
+	 * @return 是否成功加载
 	 */
 	private boolean navigateAndLoad(String url, int timeout) {
 		try {
@@ -168,12 +171,10 @@ public class ReivewWebDriver {
 		} catch (TimeoutException e) {
 			return false;// 超时的情况下返回false
 		} catch (Exception e) {
-			// failValidation();//共用的异常处理方法
-			// LOG.error(e);//记录错误日志
 			throw new RuntimeException(e);// 抛出运行时异常，退出运行
 		} finally {
 			driver.manage().timeouts()
-					.pageLoadTimeout(maxLoadTime, TimeUnit.SECONDS);
+					.pageLoadTimeout(maxLoadTime, TimeUnit.SECONDS);// 加载全局设置的最大尝试次数
 		}
 	}
 
@@ -183,24 +184,19 @@ public class ReivewWebDriver {
 	 * @param homepageString
 	 *            主页的url
 	 * @param searchString
-	 *            要搜索的内容
-	 * @return 搜索后的url
+	 *            要搜索的关键字
+	 * @return 搜索后页面的url
 	 */
 	public String search(String homepageString, String searchString) {
-		String inputReg = "input[type=text]"; // 输入框元素的选择规则
-
 		HtmlUnitDriver driver = new HtmlUnitDriver();
+		String inputReg = "input[type=text]"; // 输入框元素的选择规则
 		driver.get(homepageString);
 		System.out.println("before search:\tPage title is:" + driver.getTitle()
 				+ " url: " + driver.getCurrentUrl());
-		// 找到文本框
-		WebElement element = driver.findElement(By.cssSelector(inputReg));
-		// 输入搜索关键字
-		element.sendKeys(searchString);
-		// 提交输入
-		element.submit();
-		// 获取输入后的url
-		String curUrl = driver.getCurrentUrl();
+		WebElement element = driver.findElement(By.cssSelector(inputReg));// 找到文本框
+		element.sendKeys(searchString);// 输入搜索关键字
+		element.submit();// 提交输入
+		String curUrl = driver.getCurrentUrl();// 获取输入后的url
 		System.out.println("after search\t : page title is:"
 				+ driver.getTitle() + " url: " + curUrl);
 		driver.close();
@@ -230,28 +226,35 @@ public class ReivewWebDriver {
 		}
 		System.out
 				.println("get product url over=================================================================");
-		System.out.println(products.size());
+		System.out.println("product size: " + products.size());
 		driver.close();
 		return products;
 	}
 
+	/**
+	 * 根据关键字和指定商品个数爬取评论
+	 * 
+	 * @param searchStr
+	 *            要搜索的关键字
+	 * @param productNum
+	 *            商品个数
+	 */
 	public void runSpider(String searchStr, int productNum) {
-		ReivewWebDriver nDriver = new ReivewWebDriver();
-
-		String s = nDriver.search("http://www.amazon.cn/ref=nav_logo",
-				searchStr);// 设置主页和搜索内容
-		HashSet<ProductUrl> productsStrings = nDriver.getProductPage(s);// 获取搜索后得到的所有商品url
+		String s = search("http://www.amazon.cn/ref=nav_logo", searchStr);// 设置主页和搜索内容
+		HashSet<ProductUrl> productsStrings = getProductPage(s);// 获取搜索后得到的所有商品url
 
 		WritableSheet sheet = null;
 		FileDealer fileDealer = new FileDealer();
 		fileDealer.openWriteFile("t.xls");
-		int i = 0;
+		int i = 0;// 当前已获取多少个商品
 		for (ProductUrl productUrl : productsStrings) {
-			if (i == productNum) {
+			if (i == productNum) {// 已获取足够多的商品，跳出循环
 				break;
 			}
 
-			nDriver.nextPage(nDriver.getReviewPage(productUrl.getString()));
+			dealReviewPage(getReviewPage(productUrl.getString()));// 处理该商品的所有评论
+
+			// 将获取的评论写到表格中
 			sheet = fileDealer.getBook().createSheet("product " + (i + 1), i);// 设置表单名字和编号
 			try {
 				fileDealer.wirteReviews(reviews, sheet);
@@ -264,12 +267,13 @@ public class ReivewWebDriver {
 			i++;
 		}
 
+		// 关闭资源
 		fileDealer.closeWriteFile();
-		nDriver.driver.close();
+		driver.close();
 	}
 
 	public static void main(String[] args) {
 		ReivewWebDriver reivewWebDriver = new ReivewWebDriver();
-		reivewWebDriver.runSpider("手机", 3);
+		reivewWebDriver.runSpider("手机", 1);
 	}
 }

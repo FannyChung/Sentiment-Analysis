@@ -15,7 +15,7 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
-import spider.FileDealer;
+import utils.FileDealer;
 
 /**
  * 表格帮助类，用于表格自动设置长宽，从xls中读取内容、表格筛选
