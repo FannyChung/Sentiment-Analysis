@@ -209,6 +209,7 @@ public class AnalysisText {
 
 		CLibrary.Instance.NLPIR_ImportUserDict("新词.txt");// 导入新词
 
+		
 		for (String string : allEmotionRelatedWords) {// 导入所有的情感词
 			CLibrary.Instance.NLPIR_AddUserWord(string);
 		}

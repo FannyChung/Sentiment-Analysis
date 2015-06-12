@@ -1,2 +1,11 @@
 precision		recall		F1		accuracy
-84.60%	80.25%	76.62%	80.25%	22937 ms 
+74.54%	77.01%	75.60%	77.03%	20711 ms precision		recall		F1		accuracy
+74.54%	77.01%	75.60%	77.03%	20711 ms precision		recall		F1		accuracy
+74.54%	77.01%	75.60%	77.03%	20711 ms precision		recall		F1		accuracy
+74.54%	77.01%	75.60%	77.03%	20711 ms precision		recall		F1		accuracy
+74.54%	77.01%	75.60%	77.03%	20711 ms precision		recall		F1		accuracy
+74.54%	77.01%	75.60%	77.03%	20711 ms precision		recall		F1		accuracy
+74.54%	77.01%	75.60%	77.03%	20711 ms precision		recall		F1		accuracy
+74.54%	77.01%	75.60%	77.03%	20711 ms precision		recall		F1		accuracy
+74.54%	77.01%	75.60%	77.03%	20711 ms precision		recall		F1		accuracy
+74.54%	77.01%	75.60%	77.03%	20711 ms 

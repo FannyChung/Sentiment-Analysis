@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -44,6 +45,43 @@ public class DataSet {
 		analReview.setFeatureVector(feVec);
 	}
 
+	private int getEmotPre(AnalReview analReview, int size, String emotionWord,
+			ArrayList<String> negaWords) {
+		int result = 1;
+		ArrayList<String[]> wordOfSentence = analReview.getWordOfSentence();// 每句话里面的词
+		for (String[] strings : wordOfSentence) {
+			for (int i = 0; i < strings.length; i++) {
+				String string = strings[i];
+				if (string.equals(emotionWord)) {
+					for (int j = Math.max(0, i - size); j < i; j++) {
+						if (negaWords.contains(strings[j])) {
+							result *= -1;
+						}
+					}
+				}
+			}
+		}
+		return result;
+	}
+
+	public void genEmoVector(AnalReview analReview,
+			HashMap<String, Integer> emotionFeats, ArrayList<String> negaWords) {
+		int[] emoFeatVector = new int[emotionFeats.size()];
+		HashMap<String, Integer> freTemp = analReview.getFrequency();
+		int i = 0;
+		Iterator<Entry<String, Integer>> itr = emotionFeats.entrySet()
+				.iterator();
+		while (itr.hasNext()) {
+			Map.Entry<String, Integer> entry = itr.next();
+			String emotionWord = entry.getKey();
+			if (freTemp.containsKey(emotionWord)) {
+				emoFeatVector[i] = getEmotPre(analReview, 5, emotionWord,
+						negaWords);// * entry.getValue()
+			}
+			i++;
+		}
+	}
+
 	/**
 	 * 把多条文本向量化
 	 * 
@@ -51,9 +89,11 @@ public class DataSet {
 	 * @param features
 	 */
 	public void genFeatureVectors(ArrayList<AnalReview> reviews,
-			ArrayList<String> features) {
+			ArrayList<String> features, HashMap<String, Integer> emotionFeats,
+			ArrayList<String> negaWords) {
 		for (AnalReview analReview : reviews) {
 			genNmFtVecOfAReview(analReview, features);// 生成普通特征的特征向量
+			genEmoVector(analReview, emotionFeats, negaWords);
 		}
 	}
 

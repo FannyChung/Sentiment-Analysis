@@ -37,10 +37,13 @@ public class Model {
 	 * 特征在所有文档中的出现次数
 	 */
 	private ArrayList<Integer> featureCount;
+	
 	/**
 	 * 词在不同类别中的计数
 	 */
 	private ArrayList<ArrayList<Integer>> countOfWordsDifCate;// 外层是类别，内层是特征词
+	
+	private ArrayList<ArrayList<Integer>> countOfEmoWordsDifCate;
 	/**
 	 * 数据集的总大小
 	 */
@@ -53,6 +56,7 @@ public class Model {
 	 * 每个特征在各个类中的概率P(f|c)
 	 */
 	private ArrayList<ArrayList<Double>> pOfWordInDifCate;// 外层是类别，内层是特征
+	private ArrayList<ArrayList<Double>> pOfEmoWordInDifCate;
 	/**
 	 * 每个类的概率P(c)
 	 */

@@ -32,11 +32,13 @@ public class Controller {
 	/**
 	 * 标记的类别
 	 */
-	private int a[] ={0,1};// { 1, 2, 3, 4, 5 }
+	private int a[] ={ 1, 2, 3, 4, 5 };// { 1, 2, 3, 4, 5 }{0,1}
 	/**
 	 * 预测类别和标记类别的对应关系
 	 */
-	private int b[][] = {{0},{1}};//{ { 1, 2 }, { 3 }, { 4, 5 } };
+	private int b[][] ={ { 1, 2 }, { 3 }, { 4, 5 } };// { { 1, 2 }, { 3 }, { 4, 5 } }
+											//;{{0},{1}}
+	//{{1},{2},{3},{4},{5}}
 	/**
 	 * 特征词的字符串集合
 	 */
@@ -79,6 +81,7 @@ public class Controller {
 	 */
 	private int IG_Num;
 
+	private int DF_Num;
 	/**
 	 * 读取并打开excel文件
 	 * 
@@ -133,11 +136,11 @@ public class Controller {
 				sheet = book.getSheet(i);
 				getAnalysisText().dealSheetRev(sheet);
 			}
-			// test.printRes();
 
 			// 写每条评论的词频和星级等信息
 			sheet = book.createSheet("所有评论", sheetNum++);
-			getAnalysisText().writeReviews(sheet, getAnalysisText().getReviews());
+			getAnalysisText().writeReviews(sheet,
+					getAnalysisText().getReviews());
 		} catch (RowsExceededException e) {
 			e.printStackTrace();
 		} catch (WriteException e) {
@@ -184,7 +187,7 @@ public class Controller {
 
 			// 文档频率过滤
 			if (DF_on) {
-				feature.removeByDF(model.getFeatureCount(), 3);
+				feature.removeByDF(model.getFeatureCount(), DF_Num);
 				System.out.println("after DF: featureSize "
 						+ feature.getFeatureStrings().size());
 
@@ -208,7 +211,7 @@ public class Controller {
 		}
 
 		// 对所有评论文本进行向量化
-		dataSet.genFeatureVectors(getAnalysisText().getReviews(), features);
+		dataSet.genFeatureVectors(getAnalysisText().getReviews(), features, loadEmotionRelated.getEmotionFeats(), loadEmotionRelated.getNegaWords());
 	}
 
 	/**
@@ -343,17 +346,25 @@ public class Controller {
 		return analysisText;
 	}
 
+	/**
+	 * @param dF_Num the dF_Num to set
+	 */
+	public void setDF_Num(int dF_Num) {
+		DF_Num = dF_Num;
+	}
+
 	public static void main(String[] args) {
-		int repeatTimes = 1;
+		int repeatTimes = 10;
 		double total[] = new double[5];
 		for (int p = 0; p < repeatTimes; p++) {
 			long a = System.currentTimeMillis();
 			Controller controller = new Controller();
-			controller.openExcel("tan.xls", "result.xls");
+			controller.openExcel("t.xls", "result.xls");
 
 			controller.setStop_on(true);// 停用词
-			controller.setDF_on(false);// DF
+			controller.setDF_on(true);// DF
 			controller.setIG_on(true);// IG
+			controller.setDF_Num(4);
 			controller.setIG_Num(2000);
 
 			controller.wordSegmentation();
@@ -366,7 +377,7 @@ public class Controller {
 			double sumF1 = 0;
 			double sumAccu = 0;
 			for (int i = 0; i < k; i++) {
-				//第i个集合作测试集，其他k-1个集合作训练集
+				// 第i个集合作测试集，其他k-1个集合作训练集
 				ArrayList<AnalReview> trainAnalReviews = new ArrayList<AnalReview>(
 						k - 1);
 				for (int j = 0; j < k; j++) {
@@ -391,7 +402,6 @@ public class Controller {
 					+ decimalFormat.format(sumF1 / k * 100) + "%\t"
 					+ decimalFormat.format(sumAccu / k * 100) + "%\t");
 
-			
 			controller.closeExcel();
 			logger.info((System.currentTimeMillis() - a) + " ms ");
 			total[0] += (sumPre / k);

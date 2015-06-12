@@ -94,7 +94,7 @@ public class Feature {
 		// 排序，value值大的排在前面
 		List<Map.Entry<String, Double>> sortedIG = new ArrayList<Map.Entry<String, Double>>(
 				featureIG.entrySet());
-		Collections.sort(sortedIG, new Comparator<Map.Entry<String, Double>>() {
+		Comparator<Map.Entry<String, Double>> cp = new Comparator<Map.Entry<String, Double>>() {
 			@Override
 			public int compare(Map.Entry<String, Double> firstMapEntry,
 					Map.Entry<String, Double> secondMapEntry) {
@@ -108,7 +108,8 @@ public class Feature {
 					return 0;
 				}
 			}
-		});
+		};
+		Collections.sort(sortedIG, cp);
 
 		// 选择前afterSize个并返回
 		ArrayList<String> afterFeatures = new ArrayList<String>(afterSize);
@@ -256,7 +257,6 @@ public class Feature {
 	public ArrayList<String> getFeatureStrings() {
 		return featureStrings;
 	}
-
 
 	/**
 	 * 设置特征的字符串集合
