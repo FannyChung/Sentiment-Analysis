@@ -27,18 +27,17 @@ import utils.MyLogger;
 public class Controller {
 	private AnalysisText analysisText = new AnalysisText();
 	private Feature feature;
-	private DataSet dataSet = new DataSet();
+	private DataSet dataSet;
 	private Model model;
+	
 	/**
 	 * 标记的类别
 	 */
-	private int a[] ={ 1, 2, 3, 4, 5 };// { 1, 2, 3, 4, 5 }{0,1}
+	private int a[];// { 1, 2, 3, 4, 5 }{0,1}
 	/**
 	 * 预测类别和标记类别的对应关系
 	 */
-	private int b[][] ={ { 1, 2 }, { 3 }, { 4, 5 } };// { { 1, 2 }, { 3 }, { 4, 5 } }
-											//;{{0},{1}}
-	//{{1},{2},{3},{4},{5}}
+	private int b[][];
 	/**
 	 * 特征词的字符串集合
 	 */
@@ -76,12 +75,19 @@ public class Controller {
 	 * 是否使用信息增益过滤
 	 */
 	private boolean IG_on;
+
+	private boolean CHI_on;
+	private boolean MI_on;
 	/**
 	 * 设置的信息增益过滤后的大小
 	 */
 	private int IG_Num;
 
 	private int DF_Num;
+
+	private int CHI_Num;
+	private int MI_Num;
+
 	/**
 	 * 读取并打开excel文件
 	 * 
@@ -126,8 +132,7 @@ public class Controller {
 	 * 分词并输出相关信息
 	 */
 	public void wordSegmentation() {
-		getAnalysisText().setAllEmotionRelatedWords(
-				loadEmotionRelated.getAllEmotionRelated());
+		getAnalysisText().setAllEmotionRelatedWords(loadEmotionRelated.getAllEmotionRelated());
 		getAnalysisText().initNlpri();
 		try {
 			WritableSheet sheet;
@@ -139,8 +144,7 @@ public class Controller {
 
 			// 写每条评论的词频和星级等信息
 			sheet = book.createSheet("所有评论", sheetNum++);
-			getAnalysisText().writeReviews(sheet,
-					getAnalysisText().getReviews());
+			getAnalysisText().writeReviews(sheet, getAnalysisText().getReviews());
 		} catch (RowsExceededException e) {
 			e.printStackTrace();
 		} catch (WriteException e) {
@@ -172,11 +176,9 @@ public class Controller {
 			// 删除停用词
 			if (Stop_on) {
 				loadEmotionRelated.regenWordLists(features);
-				loadStopWords.filtEmotionWords(loadEmotionRelated
-						.getAllEmotionRelated());// 停用词不包含情感词
+				loadStopWords.filtEmotionWords(loadEmotionRelated.getAllEmotionRelated());// 停用词不包含情感词
 				feature.removeStopWords(loadStopWords.getStopWords());
-				System.out.println("after StopWords: featureSize "
-						+ features.size());
+				System.out.println("after StopWords: featureSize " + features.size());
 				sheet = book.createSheet("StopWords特征筛选后", sheetNum++);
 				feature.writeFeature(sheet);
 			}
@@ -188,8 +190,7 @@ public class Controller {
 			// 文档频率过滤
 			if (DF_on) {
 				feature.removeByDF(model.getFeatureCount(), DF_Num);
-				System.out.println("after DF: featureSize "
-						+ feature.getFeatureStrings().size());
+				System.out.println("after DF: featureSize " + feature.getFeatureStrings().size());
 
 				sheet = book.createSheet("DF特征筛选后", sheetNum++);
 				feature.writeFeature(sheet);
@@ -197,7 +198,7 @@ public class Controller {
 
 			// 信息增益过滤
 			if (IG_on) {
-				features = feature.IGSelection(features, IG_Num, model);
+				features = feature.IGSelection(features, IG_Num, model,this.DF_Num);
 				feature.setFeatureStrings(features);
 				feature.updateFeatFre();
 				System.out.println("after IG: featureSize " + features.size());
@@ -206,12 +207,37 @@ public class Controller {
 				sheet = book.createSheet("IG特征筛选后", sheetNum++);
 				feature.writeFeature(sheet);
 			}
+
+			if (CHI_on) {
+				features = feature.CHISel(features, CHI_Num, model,this.DF_Num);
+				feature.setFeatureStrings(features);
+				feature.updateFeatFre();
+				System.out.println("after CHI: featureSize " + features.size());
+				System.out.println(feature.getFeaturesFreq().size());
+
+				sheet = book.createSheet("CHI特征筛选后", sheetNum++);
+				feature.writeFeature(sheet);
+			}
+
+			if (MI_on) {
+				features = feature.MISel(features, MI_Num, model,this.DF_Num);
+				feature.setFeatureStrings(features);
+				feature.updateFeatFre();
+				System.out.println("after MI: featureSize " + features.size());
+				System.out.println();
+
+				sheet = book.createSheet("MI特征筛选后", sheetNum++);
+				feature.writeFeature(sheet);
+			}
 		} catch (WriteException e) {
 			e.printStackTrace();
 		}
 
 		// 对所有评论文本进行向量化
-		dataSet.genFeatureVectors(getAnalysisText().getReviews(), features, loadEmotionRelated.getEmotionFeats(), loadEmotionRelated.getNegaWords());
+		dataSet=new DataSet();
+		dataSet.genFeatureVectors(getAnalysisText().getReviews(), features, loadEmotionRelated.getEmotionFeats(),
+				loadEmotionRelated.getNegaWords());
+		
 	}
 
 	/**
@@ -230,7 +256,6 @@ public class Controller {
 	public void training(ArrayList<AnalReview> trainData) {
 		model.separateReviewsByLevel(trainData, b);
 		model.countFeatureInCates();// 向量化后的计数
-
 		model.calcPc();
 		model.calcPfc();
 	}
@@ -257,8 +282,7 @@ public class Controller {
 		} catch (WriteException e) {
 			e.printStackTrace();
 		}
-		double[] prfa = prediction.statisticalRate(k, a, b,
-				prediction.genConfuMatrix(testData, results, a, b));
+		double[] prfa = prediction.statisticalRate(k, a, b, prediction.genConfuMatrix(testData, results, a, b));
 		return prfa;
 	}
 
@@ -347,73 +371,78 @@ public class Controller {
 	}
 
 	/**
-	 * @param dF_Num the dF_Num to set
+	 * @param dF_Num
+	 *            the dF_Num to set
 	 */
 	public void setDF_Num(int dF_Num) {
 		DF_Num = dF_Num;
 	}
 
-	public static void main(String[] args) {
-		int repeatTimes = 10;
-		double total[] = new double[5];
-		for (int p = 0; p < repeatTimes; p++) {
-			long a = System.currentTimeMillis();
-			Controller controller = new Controller();
-			controller.openExcel("t.xls", "result.xls");
 
-			controller.setStop_on(true);// 停用词
-			controller.setDF_on(true);// DF
-			controller.setIG_on(true);// IG
-			controller.setDF_Num(4);
-			controller.setIG_Num(2000);
+	/**
+	 * @return the cHI_on
+	 */
+	public boolean isCHI_on() {
+		return CHI_on;
+	}
 
-			controller.wordSegmentation();
-			controller.featureSel();
+	/**
+	 * @param cHI_on
+	 *            the cHI_on to set
+	 */
+	public void setCHI_on(boolean cHI_on) {
+		CHI_on = cHI_on;
+	}
 
-			int k = 5;
-			controller.seleTrainSet(k);
-			double sumPre = 0;
-			double sumRecal = 0;
-			double sumF1 = 0;
-			double sumAccu = 0;
-			for (int i = 0; i < k; i++) {
-				// 第i个集合作测试集，其他k-1个集合作训练集
-				ArrayList<AnalReview> trainAnalReviews = new ArrayList<AnalReview>(
-						k - 1);
-				for (int j = 0; j < k; j++) {
-					if (i == j)
-						continue;
-					trainAnalReviews.addAll(controller.getDataSet().getkLists()
-							.get(j));
-				}
-				controller.training(trainAnalReviews);
-				double[] prfa = controller.predict(i, controller.getDataSet()
-						.getkLists().get(i));
-				sumPre += prfa[0];
-				sumRecal += prfa[1];
-				sumF1 += prfa[2];
-				sumAccu += prfa[3];
-			}
-			DecimalFormat decimalFormat = new DecimalFormat("#.00");
-			MyLogger logger = new MyLogger("结果.txt");
-			logger.info("precision\t\trecall\t\tF1\t\taccuracy\r\n");
-			logger.info(decimalFormat.format(sumPre / k * 100) + "%\t"
-					+ decimalFormat.format(sumRecal / k * 100) + "%\t"
-					+ decimalFormat.format(sumF1 / k * 100) + "%\t"
-					+ decimalFormat.format(sumAccu / k * 100) + "%\t");
+	/**
+	 * @return the cHI_Num
+	 */
+	public int getCHI_Num() {
+		return CHI_Num;
+	}
 
-			controller.closeExcel();
-			logger.info((System.currentTimeMillis() - a) + " ms ");
-			total[0] += (sumPre / k);
-			total[1] += (sumRecal / k);
-			total[2] += (sumF1 / k);
-			total[3] += (sumAccu / k);
-			total[4] += (System.currentTimeMillis() - a);
-		}
+	/**
+	 * @param cHI_Num
+	 *            the cHI_Num to set
+	 */
+	public void setCHI_Num(int cHI_Num) {
+		CHI_Num = cHI_Num;
+	}
 
-		for (int i = 0; i < total.length; i++) {
-			System.out.print(total[i] / repeatTimes + "\t");
-		}
+	/**
+	 * @return the mI_Num
+	 */
+	public int getMI_Num() {
+		return MI_Num;
+	}
 
+	/**
+	 * @param mI_Num
+	 *            the mI_Num to set
+	 */
+	public void setMI_Num(int mI_Num) {
+		MI_Num = mI_Num;
+	}
+
+	/**
+	 * @return the mI_on
+	 */
+	public boolean isMI_on() {
+		return MI_on;
+	}
+
+	/**
+	 * @param mI_on
+	 *            the mI_on to set
+	 */
+	public void setMI_on(boolean mI_on) {
+		MI_on = mI_on;
+	}
+
+	/**
+	 * @return the featureSize
+	 */
+	public int getFeatureSize() {
+		return feature.getFeaturesFreq().size();
 	}
 }

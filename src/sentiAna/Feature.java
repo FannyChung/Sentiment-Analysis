@@ -56,8 +56,7 @@ public class Feature {
 	 *            包含特征概率信息的模型
 	 * @return 过滤后的特征字符串集合
 	 */
-	public ArrayList<String> IGSelection(ArrayList<String> features,
-			int afterSize, Model model) {
+	public ArrayList<String> IGSelection(ArrayList<String> features, int afterSize, Model model,int minDF) {
 		int beforeSize = features.size();
 		if (afterSize >= beforeSize) {// IG选择后的规模应该小于当前规模
 			System.err.println("IG选择后的规模应该小于当前规模" + beforeSize);
@@ -65,17 +64,19 @@ public class Feature {
 		}
 		ArrayList<Integer> featureCount = model.getFeatureCount();// 该特征在所有文档中的出现次数
 		ArrayList<Integer> cateCount = model.getDiffCateNum();// 不同类别的文本个数
-		ArrayList<ArrayList<Integer>> countOfWordsDifCate = model
-				.getCountOfWordsDifCate();// 不同类别下不同特征的出现次数
+		ArrayList<ArrayList<Integer>> countOfWordsDifCate = model.getCountOfWordsDifCate();// 不同类别下不同特征的出现次数
 		int totalSize = model.getTotalSize();// 总共评论个数
 
 		// 计算每个特征的IG
 		Map<String, Double> featureIG = new HashMap<String, Double>(beforeSize);// 不同特征的IG值
 
-		for (int i = 0; i < features.size(); i++) {
+		for (int i = 0; i < featureCount.size(); i++) {
+			int Nf = featureCount.get(i);
+			if(Nf<=minDF){
+				continue;
+			}
 			double Hcf = 0;
 			double sum = 0;
-			int Nf = featureCount.get(i);
 			for (int k = 0; k < 2; k++) {
 				if (k == 1)
 					Nf = totalSize - Nf;// N_f
@@ -92,14 +93,124 @@ public class Feature {
 			featureIG.put(features.get(i), Hcf);
 		}
 		// 排序，value值大的排在前面
-		List<Map.Entry<String, Double>> sortedIG = new ArrayList<Map.Entry<String, Double>>(
-				featureIG.entrySet());
+		List<Map.Entry<String, Double>> sortedIG = new ArrayList<Map.Entry<String, Double>>(featureIG.entrySet());
 		Comparator<Map.Entry<String, Double>> cp = new Comparator<Map.Entry<String, Double>>() {
 			@Override
-			public int compare(Map.Entry<String, Double> firstMapEntry,
-					Map.Entry<String, Double> secondMapEntry) {
-				double res = secondMapEntry.getValue()
-						- firstMapEntry.getValue();
+			public int compare(Map.Entry<String, Double> firstMapEntry, Map.Entry<String, Double> secondMapEntry) {
+				double res = secondMapEntry.getValue() - firstMapEntry.getValue();
+				if (res > 0)
+					return 1;
+				else if (res < 0) {
+					return -1;
+				} else {
+					return 0;
+				}
+			}
+		};
+		Collections.sort(sortedIG, cp);
+
+		// 选择前afterSize个并返回
+		ArrayList<String> afterFeatures = new ArrayList<String>(afterSize);
+		for (int i = 0; i < afterSize; i++) {
+			try {
+				Entry<String, Double> entry = sortedIG.get(i);
+				afterFeatures.add(entry.getKey());
+			} catch (Exception e) {
+				break;
+			}
+		}
+		return afterFeatures;
+	}
+
+	public ArrayList<String> CHISel(ArrayList<String> features, int afterSize, Model model,int minDF) {
+		int beforeSize = features.size();
+		if (afterSize >= beforeSize) {// IG选择后的规模应该小于当前规模
+			System.err.println("IG选择后的规模应该小于当前规模" + beforeSize);
+			return features;
+		}
+		ArrayList<Integer> featureCount = model.getFeatureCount();// 该特征在所有文档中的出现次数Nw
+		ArrayList<Integer> cateCount = model.getDiffCateNum();// 不同类别的文本个数Nc
+		ArrayList<ArrayList<Integer>> countOfWordsDifCate = model.getCountOfWordsDifCate();// 不同类别下不同特征的出现次数N(c,w)
+		int totalSize = model.getTotalSize();// 总共评论个数N
+		Map<String, Double> featureCHI = new HashMap<String, Double>(beforeSize);// 不同特征的IG值
+		for (int featureIndex = 0; featureIndex < featureCount.size(); featureIndex++) {
+			double max = 0;
+			double Nw = featureCount.get(featureIndex);
+			if(Nw<=minDF)
+				continue;
+			for (int cateIndex = 0; cateIndex < cateCount.size(); cateIndex++) {
+				double Nc = cateCount.get(cateIndex);
+				double Ncw = countOfWordsDifCate.get(cateIndex).get(featureIndex);
+				double A = Ncw;
+				double B = Nc - Ncw;
+				double C = Nw - Ncw;
+				double D = (totalSize - Nc) - C;
+
+				double tmp = (A * D - C * B);
+				double ch = totalSize * tmp * tmp / ((A + C) * (A + B) * (D + C) * (D + B));
+				System.out.println("chi:" + ch);
+				if (ch > max)
+					max = ch;
+			}
+			featureCHI.put(features.get(featureIndex), max);
+		}
+		List<Map.Entry<String, Double>> sortedIG = new ArrayList<Map.Entry<String, Double>>(featureCHI.entrySet());
+		Comparator<Map.Entry<String, Double>> cp = new Comparator<Map.Entry<String, Double>>() {
+			@Override
+			public int compare(Map.Entry<String, Double> firstMapEntry, Map.Entry<String, Double> secondMapEntry) {
+				double res = secondMapEntry.getValue() - firstMapEntry.getValue();
+				if (res > 0)
+					return 1;
+				else if (res < 0) {
+					return -1;
+				} else {
+					return 0;
+				}
+			}
+		};
+		Collections.sort(sortedIG, cp);
+
+		// 选择前afterSize个并返回
+		ArrayList<String> afterFeatures = new ArrayList<String>(afterSize);
+		for (int i = 0; i < afterSize; i++) {
+			Entry<String, Double> entry = sortedIG.get(i);
+			afterFeatures.add(entry.getKey());
+		}
+		return afterFeatures;
+	}
+
+	public ArrayList<String> MISel(ArrayList<String> features, int afterSize, Model model,int minDF) {
+		int beforeSize = features.size();
+		if (afterSize >= beforeSize) {// IG选择后的规模应该小于当前规模
+			System.err.println("IG选择后的规模应该小于当前规模" + beforeSize);
+			return features;
+		}
+		ArrayList<Integer> featureCount = model.getFeatureCount();// 该特征在所有文档中的出现次数Nw
+		ArrayList<Integer> cateCount = model.getDiffCateNum();// 不同类别的文本个数Nc
+		ArrayList<ArrayList<Integer>> countOfWordsDifCate = model.getCountOfWordsDifCate();// 不同类别下不同特征的出现次数N(c,w)
+		int totalSize = model.getTotalSize();// 总共评论个数N
+		Map<String, Double> featureMI = new HashMap<String, Double>(beforeSize);// 不同特征的IG值
+		for (int featureIndex = 0; featureIndex < featureCount.size(); featureIndex++) {
+			double max = 0;
+			double Nw = featureCount.get(featureIndex);
+			if(Nw<=minDF)
+				continue;
+			for (int cateIndex = 0; cateIndex < cateCount.size(); cateIndex++) {
+				double Nc = cateCount.get(cateIndex);
+				double Ncw = countOfWordsDifCate.get(cateIndex).get(featureIndex);
+//				double mi = Math.log(totalSize * Ncw + Double.MIN_VALUE)-Math.log(Nc * Nw);
+				double mi = totalSize*Ncw/(Nc*Nw);
+				System.out.println("MI:" + mi);
+				if (mi > max)
+					max = mi;
+			}
+			featureMI.put(features.get(featureIndex), max);
+		}
+		List<Map.Entry<String, Double>> sortedIG = new ArrayList<Map.Entry<String, Double>>(featureMI.entrySet());
+		Comparator<Map.Entry<String, Double>> cp = new Comparator<Map.Entry<String, Double>>() {
+			@Override
+			public int compare(Map.Entry<String, Double> firstMapEntry, Map.Entry<String, Double> secondMapEntry) {
+				double res = secondMapEntry.getValue() - firstMapEntry.getValue();
 				if (res > 0)
 					return 1;
 				else if (res < 0) {
@@ -146,18 +257,13 @@ public class Feature {
 	 *            待排序的词与词频的映射
 	 */
 	public void sortByFreq(Map<String, Integer> frequecy) {
-		featuresFreq = new ArrayList<Map.Entry<String, Integer>>(
-				frequecy.entrySet());
-		Collections.sort(featuresFreq,
-				new Comparator<Map.Entry<String, Integer>>() {
-					@Override
-					public int compare(
-							Map.Entry<String, Integer> firstMapEntry,
-							Map.Entry<String, Integer> secondMapEntry) {
-						return firstMapEntry.getValue()
-								- secondMapEntry.getValue();
-					}
-				});
+		featuresFreq = new ArrayList<Map.Entry<String, Integer>>(frequecy.entrySet());
+		Collections.sort(featuresFreq, new Comparator<Map.Entry<String, Integer>>() {
+			@Override
+			public int compare(Map.Entry<String, Integer> firstMapEntry, Map.Entry<String, Integer> secondMapEntry) {
+				return firstMapEntry.getValue() - secondMapEntry.getValue();
+			}
+		});
 
 		featureStrings = new ArrayList<String>(featuresFreq.size());
 		for (int i = 0; i < featuresFreq.size(); i++) {
@@ -178,8 +284,7 @@ public class Feature {
 		int removeCount = 0;
 		for (int i = 0; i < featureCount.size(); i++) {
 			if (featureCount.get(i) <= minDF) {
-				logger.info(featuresFreq.get(i - removeCount).toString()
-						+ "\r\n");
+				logger.info(featuresFreq.get(i - removeCount).toString() + "\r\n");
 				featuresFreq.remove(i - removeCount);
 				featureStrings.remove(i - removeCount);
 				removeCount++;
@@ -228,8 +333,7 @@ public class Feature {
 	 * @throws WriteException
 	 *             写错误
 	 */
-	public void writeFeature(WritableSheet sheet) throws RowsExceededException,
-			WriteException {
+	public void writeFeature(WritableSheet sheet) throws RowsExceededException, WriteException {
 		Label label;
 		int k = 0;
 		for (int i = 0; i < featuresFreq.size(); i++) {

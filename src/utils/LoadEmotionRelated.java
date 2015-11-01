@@ -26,7 +26,7 @@ public class LoadEmotionRelated {
 	private String fileName[] = { "正面情感词语（中文）.txt", "负面情感词语（中文）.txt",
 			"正面评价词语（中文）.txt", "负面评价词语（中文）.txt", "程度级别词语（中文）.txt",
 			"主张词语（中文）.txt" };
-	private String nageFile = "自定义否定词.txt";
+	private String nageFile = "./myresource/自定义否定词.txt";
 	private ArrayList<String> allEmotionRelated = new ArrayList<String>();
 
 	private HashMap<String, Integer> emotionFeats = new HashMap<String, Integer>();
